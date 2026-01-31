@@ -79,6 +79,12 @@ const Home = () => {
             >
               Sign Up
             </button>
+            <button
+              onClick={() => navigate('/search')}
+              className="w-full py-3 bg-gray-100 text-gray-800 rounded-lg font-semibold hover:bg-gray-200 transition"
+            >
+              Continue as Guest
+            </button>
           </div>
           <p className="text-sm text-gray-500 text-center mt-4">
             Join the IIIT Kottayam carpooling community

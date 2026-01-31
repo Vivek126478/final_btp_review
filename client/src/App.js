@@ -11,6 +11,7 @@ import Home from './pages/Home';
 import SearchRides from './pages/SearchRides';
 import PostRide from './pages/PostRide';
 import RideDetails from './pages/RideDetails';
+import EditRide from './pages/EditRide';
 import MyRides from './pages/MyRides';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
@@ -37,9 +38,7 @@ function App() {
               element={
                 <>
                   <Navbar />
-                  <ProtectedRoute>
-                    <SearchRides />
-                  </ProtectedRoute>
+                  <SearchRides />
                 </>
               }
             />
@@ -59,8 +58,17 @@ function App() {
               element={
                 <>
                   <Navbar />
+                  <RideDetails />
+                </>
+              }
+            />
+            <Route
+              path="/ride/:id/edit"
+              element={
+                <>
+                  <Navbar />
                   <ProtectedRoute>
-                    <RideDetails />
+                    <EditRide />
                   </ProtectedRoute>
                 </>
               }

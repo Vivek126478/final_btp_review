@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Calendar, Users, DollarSign, Star, Phone } from 'lucide-react';
+import { MapPin, Calendar, Users, DollarSign, Star, Phone, Pencil, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { rideAPI, ratingAPI } from '../utils/api';
 import { useWeb3 } from '../context/Web3Context';
@@ -14,13 +14,22 @@ const RideDetails = () => {
   const [ride, setRide] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [seatsBooked, setSeatsBooked] = useState(1);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [rating, setRating] = useState({ stars: 5, comment: '' });
   const [ratingTarget, setRatingTarget] = useState(null);
+  const [boardingStatus, setBoardingStatus] = useState(null);
+  const [otpInputs, setOtpInputs] = useState({});
 
   useEffect(() => {
     fetchRideDetails();
   }, [id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchBoardingStatus();
+    }
+  }, [id, user?.id]);
 
   const fetchRideDetails = async () => {
     try {
@@ -34,11 +43,96 @@ const RideDetails = () => {
     }
   };
 
-  const handleJoinRide = async () => {
+  const fetchBoardingStatus = async () => {
+    try {
+      const res = await rideAPI.getBoardingStatus(id);
+      setBoardingStatus(res.data?.status || null);
+    } catch {
+      setBoardingStatus(null);
+    }
+  };
+
+  const handleStartBoardingOTP = async () => {
+    if (!requireLogin()) return;
     setActionLoading(true);
     try {
-      await rideAPI.joinRide(id);
-      toast.success('Successfully joined the ride!');
+      const res = await rideAPI.startBoardingOTP(id);
+      setBoardingStatus(res.data?.status || null);
+      toast.success('OTPs sent to participants');
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to start boarding verification');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleVerifyPassengerOTP = async (participantId) => {
+    if (!requireLogin()) return;
+    const otp = otpInputs?.[participantId];
+    if (!otp) {
+      toast.error('Enter OTP');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const res = await rideAPI.verifyPassengerOTP(id, participantId, otp);
+      setBoardingStatus(res.data?.status || null);
+      toast.success('Passenger verified');
+      setOtpInputs(prev => ({ ...prev, [participantId]: '' }));
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to verify OTP');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleInvite = async () => {
+    if (!requireLogin()) return;
+
+    const email = window.prompt('Invite by email (leave blank to invite by phone):');
+    const phone = email ? null : window.prompt('Invite by phone number (optional, for sharing message):');
+
+    if (!email && !phone) return;
+
+    setActionLoading(true);
+    try {
+      const res = await rideAPI.inviteToRide(id, { email: email || undefined, phone: phone || undefined });
+
+      const shareText = res.data?.shareText;
+      if (shareText) {
+        try {
+          await navigator.clipboard.writeText(shareText);
+          toast.success('Invite prepared and copied to clipboard');
+        } catch {
+          toast.success('Invite prepared');
+          window.alert(shareText);
+        }
+      } else {
+        toast.success('Invite prepared');
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to invite');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const requireLogin = () => {
+    if (!user?.id) {
+      toast.error('Please login to continue');
+      navigate('/login');
+      return false;
+    }
+    return true;
+  };
+
+  const handleJoinRide = async () => {
+    if (!requireLogin()) return;
+    setActionLoading(true);
+    try {
+      await rideAPI.joinRide(id, seatsBooked);
+      toast.success('Join request submitted. Awaiting host approval.');
       fetchRideDetails();
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to join ride');
@@ -47,7 +141,52 @@ const RideDetails = () => {
     }
   };
 
+  const handleAcceptRequest = async (participantId) => {
+    if (!requireLogin()) return;
+    setActionLoading(true);
+    try {
+      await rideAPI.acceptJoinRequest(id, participantId);
+      toast.success('Request accepted');
+      fetchRideDetails();
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to accept request');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRejectRequest = async (participantId) => {
+    if (!requireLogin()) return;
+    if (!window.confirm('Reject this join request?')) return;
+    setActionLoading(true);
+    try {
+      await rideAPI.rejectJoinRequest(id, participantId);
+      toast.success('Request rejected');
+      fetchRideDetails();
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to reject request');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBlockRider = async (riderId) => {
+    if (!requireLogin()) return;
+    if (!window.confirm('Block this user from joining any of your future rides?')) return;
+    setActionLoading(true);
+    try {
+      await rideAPI.blockRider(id, riderId);
+      toast.success('User blocked');
+      fetchRideDetails();
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to block user');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleLeaveRide = async () => {
+    if (!requireLogin()) return;
     if (!window.confirm('Are you sure you want to leave this ride?')) return;
     setActionLoading(true);
     try {
@@ -62,6 +201,7 @@ const RideDetails = () => {
   };
 
   const handleCancelRide = async () => {
+    if (!requireLogin()) return;
     if (!window.confirm('Are you sure you want to cancel this ride?')) return;
     setActionLoading(true);
     try {
@@ -76,6 +216,7 @@ const RideDetails = () => {
   };
 
   const handleCompleteRide = async () => {
+    if (!requireLogin()) return;
     setActionLoading(true);
     try {
       await rideAPI.completeRide(id);
@@ -89,6 +230,7 @@ const RideDetails = () => {
   };
 
   const handleSubmitRating = async () => {
+    if (!requireLogin()) return;
     try {
       await ratingAPI.submitRating({
         rateeId: ratingTarget.id,
@@ -121,8 +263,17 @@ const RideDetails = () => {
   }
 
   const isDriver = ride.driver.id === user?.id;
-  const isParticipant = ride.participants?.some(
-    (p) => p.riderId === user?.id && p.status === 'joined'
+  const isAcceptedParticipant = ride.participants?.some(
+    (p) => p.riderId === user?.id && (p.status === 'accepted' || p.status === 'joined' || p.status === 'completed')
+  );
+  const isPendingParticipant = ride.participants?.some(
+    (p) => p.riderId === user?.id && p.status === 'pending'
+  );
+
+  const canEditRide = isDriver && (ride.status === 'active' || ride.status === 'draft');
+
+  const activePassengers = (ride.participants || []).filter(
+    (p) => p.status === 'accepted' || p.status === 'joined'
   );
 
   return (
@@ -154,7 +305,7 @@ const RideDetails = () => {
             <div>
               <h2 className="text-2xl font-bold text-gray-900">{ride.driver.username}</h2>
               <p className="text-gray-500">Driver</p>
-              {(isDriver || isParticipant) && ride.driver.phoneNumber && (
+              {(isDriver || isAcceptedParticipant) && ride.driver.phoneNumber && (
                 <div className="flex items-center space-x-1 text-sm text-gray-600 mt-1">
                   <Phone className="h-4 w-4" />
                   <span>{ride.driver.phoneNumber}</span>
@@ -203,7 +354,7 @@ const RideDetails = () => {
               <DollarSign className="h-6 w-6 text-green-600" />
               <div>
                 <p className="text-sm text-gray-500">Price per Seat</p>
-                <p className="font-medium">${ride.pricePerSeat || 0}</p>
+                <p className="font-medium">₹{ride.pricePerSeat || 0}</p>
               </div>
             </div>
           </div>
@@ -214,7 +365,7 @@ const RideDetails = () => {
               <h3 className="text-lg font-semibold mb-3">Participants</h3>
               <div className="space-y-2">
                 {ride.participants
-                  .filter((p) => p.status === 'joined')
+                  .filter((p) => p.status === 'accepted' || p.status === 'joined' || p.status === 'completed')
                   .map((participant) => (
                     <div
                       key={participant.id}
@@ -226,7 +377,10 @@ const RideDetails = () => {
                             {participant.rider.username.charAt(0).toUpperCase()}
                           </span>
                         </div>
-                        <span className="font-medium">{participant.rider.username}</span>
+                        <div>
+                          <div className="font-medium">{participant.rider.username}</div>
+                          <div className="text-xs text-gray-600">Seats: {participant.seatsBooked || 1}</div>
+                        </div>
                       </div>
                       {ride.status === 'completed' && (
                         <button
@@ -246,19 +400,109 @@ const RideDetails = () => {
             </div>
           )}
 
+          {/* Pending Requests (Driver Only) */}
+          {isDriver && ride.status === 'active' && ride.participants?.some((p) => p.status === 'pending') && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3">Pending Requests</h3>
+              <div className="space-y-2">
+                {ride.participants
+                  .filter((p) => p.status === 'pending')
+                  .map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200"
+                    >
+                      <div>
+                        <div className="font-medium text-gray-900">{p.rider?.username || 'User'}</div>
+                        <div className="text-sm text-gray-700">Seats requested: {p.seatsBooked || 1}</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleAcceptRequest(p.id)}
+                          disabled={actionLoading}
+                          className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => handleRejectRequest(p.id)}
+                          disabled={actionLoading}
+                          className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                        >
+                          Reject
+                        </button>
+                        {p.riderId && (
+                          <button
+                            onClick={() => handleBlockRider(p.riderId)}
+                            disabled={actionLoading}
+                            className="px-3 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition disabled:opacity-50"
+                          >
+                            Block
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex flex-wrap gap-3">
-            {!isDriver && !isParticipant && ride.status === 'active' && ride.availableSeats > 0 && (
+            {(isDriver || isAcceptedParticipant) && (
               <button
-                onClick={handleJoinRide}
+                onClick={handleInvite}
                 disabled={actionLoading}
-                className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:opacity-50"
+                className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 flex items-center space-x-2"
               >
-                Join Ride
+                <UserPlus className="h-4 w-4" />
+                <span>Invite</span>
               </button>
             )}
 
-            {isParticipant && ride.status === 'active' && (
+            {canEditRide && (
+              <button
+                onClick={() => navigate(`/ride/${id}/edit`)}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition flex items-center space-x-2"
+              >
+                <Pencil className="h-4 w-4" />
+                <span>Edit Ride</span>
+              </button>
+            )}
+
+            {!isDriver && !isAcceptedParticipant && !isPendingParticipant && ride.status === 'active' && ride.availableSeats > 0 && (
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-600">Seats</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max={Math.min(10, ride.availableSeats)}
+                    value={seatsBooked}
+                    onChange={(e) => setSeatsBooked(parseInt(e.target.value || '1'))}
+                    className="w-20 px-3 py-2 border rounded-lg"
+                  />
+                </div>
+                <button
+                  onClick={handleJoinRide}
+                  disabled={actionLoading}
+                  className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:opacity-50"
+                >
+                  Request to Join
+                </button>
+              </div>
+            )}
+
+            {isPendingParticipant && ride.status === 'active' && (
+              <button
+                disabled
+                className="px-6 py-3 bg-yellow-500 text-white rounded-lg opacity-70"
+              >
+                Request Pending
+              </button>
+            )}
+
+            {isAcceptedParticipant && ride.status === 'active' && (
               <button
                 onClick={handleLeaveRide}
                 disabled={actionLoading}
@@ -270,6 +514,15 @@ const RideDetails = () => {
 
             {isDriver && ride.status === 'active' && (
               <>
+                {activePassengers.length > 0 && (
+                  <button
+                    onClick={handleStartBoardingOTP}
+                    disabled={actionLoading}
+                    className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:opacity-50"
+                  >
+                    Start Ride (Send OTP)
+                  </button>
+                )}
                 <button
                   onClick={handleCompleteRide}
                   disabled={actionLoading}
@@ -300,6 +553,56 @@ const RideDetails = () => {
             )}
           </div>
         </div>
+
+        {isDriver && ride.status === 'active' && boardingStatus && (
+          <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Boarding Verification</h3>
+              <div className={`text-sm font-medium ${boardingStatus.allVerified ? 'text-green-700' : 'text-yellow-700'}`}>
+                {boardingStatus.allVerified ? 'All passengers verified' : 'Pending verifications'}
+              </div>
+            </div>
+
+            {boardingStatus.expiresAt && (
+              <div className="text-xs text-gray-500 mt-1">
+                Expires at: {new Date(boardingStatus.expiresAt).toLocaleString()}
+              </div>
+            )}
+
+            <div className="mt-4 space-y-3">
+              {boardingStatus.participants?.map((p) => (
+                <div key={p.participantId} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="text-sm text-gray-800">
+                    <span className="font-medium">Participant #{p.participantId}</span>
+                    <span className="ml-2 text-gray-600">Status: {p.status}</span>
+                  </div>
+
+                  {p.status !== 'verified' ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={otpInputs?.[p.participantId] || ''}
+                        onChange={(e) => setOtpInputs(prev => ({ ...prev, [p.participantId]: e.target.value }))}
+                        placeholder="Enter OTP"
+                        className="px-3 py-2 border rounded-lg w-32"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleVerifyPassengerOTP(p.participantId)}
+                        disabled={actionLoading}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                      >
+                        Verify
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-sm font-medium text-green-700">Verified</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Rating Modal */}

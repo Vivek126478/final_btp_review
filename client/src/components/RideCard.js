@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Calendar, Users, DollarSign, Tag } from 'lucide-react';
+import { MapPin, Calendar, Users, IndianRupee, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 
 const RideCard = ({ ride }) => {
@@ -88,9 +88,9 @@ const RideCard = ({ ride }) => {
       {/* Price and Status */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-200">
         <div className="flex items-center space-x-2">
-          <DollarSign className="h-5 w-5 text-green-600" />
+          <IndianRupee className="h-5 w-5 text-green-600" />
           <span className="text-lg font-semibold text-gray-900">
-            ${ride.pricePerSeat || 0}
+            ₹{ride.pricePerSeat || 0}
           </span>
           <span className="text-sm text-gray-500">per seat</span>
         </div>
@@ -98,6 +98,8 @@ const RideCard = ({ ride }) => {
           className={`px-3 py-1 rounded-full text-sm font-medium ${
             ride.status === 'active'
               ? 'bg-green-100 text-green-800'
+              : ride.status === 'draft'
+              ? 'bg-yellow-100 text-yellow-800'
               : ride.status === 'completed'
               ? 'bg-blue-100 text-blue-800'
               : 'bg-red-100 text-red-800'

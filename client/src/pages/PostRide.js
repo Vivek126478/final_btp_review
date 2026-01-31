@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Car, Plus } from 'lucide-react';
 import { rideAPI } from '../utils/api';
 import toast from 'react-hot-toast';
+import PlacesAutocompleteInput from '../components/PlacesAutocompleteInput';
+import MapPreview from '../components/MapPreview';
+import { loadGoogleMaps } from '../utils/googleMaps';
 
 const RIDE_TAGS = [
   'Office Commute',
@@ -18,9 +21,14 @@ const RIDE_TAGS = [
 const PostRide = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [locatingStart, setLocatingStart] = useState(false);
   const [formData, setFormData] = useState({
     startLocation: '',
     endLocation: '',
+    startLatitude: null,
+    startLongitude: null,
+    endLatitude: null,
+    endLongitude: null,
     rideDateTime: '',
     totalSeats: 1,
     pricePerSeat: 0,
@@ -41,34 +49,89 @@ const PostRide = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleUseCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by this browser');
+      return;
+    }
+
+    setLocatingStart(true);
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000
+        });
+      });
+
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
+      let addressText = 'Current location';
+
+      try {
+        const google = await loadGoogleMaps();
+        const geocoder = new google.maps.Geocoder();
+
+        const results = await new Promise((resolve, reject) => {
+          geocoder.geocode({ location: { lat, lng } }, (res, status) => {
+            if (status === 'OK') return resolve(res);
+            reject(new Error(status));
+          });
+        });
+
+        if (Array.isArray(results) && results[0]?.formatted_address) {
+          addressText = results[0].formatted_address;
+        }
+      } catch (e) {
+        // Reverse geocoding is optional; fallback to plain text
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        startLocation: addressText,
+        startLatitude: lat,
+        startLongitude: lng
+      }));
+    } catch (error) {
+      console.error('Geolocation error:', error);
+      toast.error('Unable to access current location');
+    } finally {
+      setLocatingStart(false);
+    }
+  };
+
+  const buildRidePayload = () => ({
+    startLocation: formData.startLocation,
+    endLocation: formData.endLocation,
+    startLatitude: formData.startLatitude,
+    startLongitude: formData.startLongitude,
+    endLatitude: formData.endLatitude,
+    endLongitude: formData.endLongitude,
+    rideDateTime: formData.rideDateTime,
+    totalSeats: formData.totalSeats,
+    pricePerSeat: formData.pricePerSeat,
+    tags: formData.tags,
+    notes: formData.notes,
+    vehicleInfo: {
+      make: formData.vehicleMake,
+      model: formData.vehicleModel,
+      color: formData.vehicleColor,
+      plate: formData.vehiclePlate
+    }
+  });
+
+  const handleCreateRide = async (status) => {
     setLoading(true);
 
     try {
-      // Create ride directly in backend database (no blockchain)
-      const rideData = {
-        startLocation: formData.startLocation,
-        endLocation: formData.endLocation,
-        rideDateTime: formData.rideDateTime,
-        totalSeats: formData.totalSeats,
-        pricePerSeat: formData.pricePerSeat,
-        tags: formData.tags,
-        notes: formData.notes,
-        vehicleInfo: {
-          make: formData.vehicleMake,
-          model: formData.vehicleModel,
-          color: formData.vehicleColor,
-          plate: formData.vehiclePlate
-        }
-      };
-
-      await rideAPI.createRide(rideData);
-      toast.success('Ride posted successfully!');
+      await rideAPI.createRide({ ...buildRidePayload(), status });
+      toast.success(status === 'draft' ? 'Ride saved as draft!' : 'Ride posted successfully!');
       navigate('/my-rides');
     } catch (error) {
-      console.error('Error posting ride:', error);
-      toast.error(error.response?.data?.error || 'Failed to post ride');
+      console.error('Error creating ride:', error);
+      const msg = error.response?.data?.error || 'Failed to create ride';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -82,38 +145,50 @@ const PostRide = () => {
           <h1 className="text-3xl font-bold text-gray-900">Post a Ride</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-6">
+        <form onSubmit={(e) => e.preventDefault()} className="bg-white rounded-lg shadow-md p-6 space-y-6">
           {/* Route Information */}
           <div>
             <h2 className="text-xl font-semibold mb-4">Route Information</h2>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Location *
-                </label>
-                <input
-                  type="text"
+                <PlacesAutocompleteInput
+                  label="Start Location"
                   value={formData.startLocation}
-                  onChange={(e) =>
-                    setFormData({ ...formData, startLocation: e.target.value })
+                  onChange={(v) => setFormData({ ...formData, startLocation: v })}
+                  onPlaceSelected={({ lat, lng }) =>
+                    setFormData({
+                      ...formData,
+                      startLatitude: lat,
+                      startLongitude: lng
+                    })
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   required
+                  placeholder="Search a location"
                 />
+                <button
+                  type="button"
+                  disabled={locatingStart}
+                  onClick={handleUseCurrentLocation}
+                  className="mt-2 text-sm text-primary-700 hover:text-primary-800 underline disabled:opacity-50"
+                >
+                  {locatingStart ? 'Getting location...' : 'Use my current location'}
+                </button>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  End Location *
-                </label>
-                <input
-                  type="text"
+                <PlacesAutocompleteInput
+                  label="End Location"
                   value={formData.endLocation}
-                  onChange={(e) =>
-                    setFormData({ ...formData, endLocation: e.target.value })
+                  onChange={(v) => setFormData({ ...formData, endLocation: v })}
+                  onPlaceSelected={({ lat, lng }) =>
+                    setFormData({
+                      ...formData,
+                      endLatitude: lat,
+                      endLongitude: lng
+                    })
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   required
+                  placeholder="Search a location"
                 />
               </div>
 
@@ -152,7 +227,7 @@ const PostRide = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Price per Seat ($)
+                  Price per Seat (₹)
                 </label>
                 <input
                   type="number"
@@ -165,6 +240,21 @@ const PostRide = () => {
                   step="0.01"
                 />
               </div>
+            </div>
+
+            <div className="mt-4">
+              <MapPreview
+                start={
+                  formData.startLatitude && formData.startLongitude
+                    ? { lat: Number(formData.startLatitude), lng: Number(formData.startLongitude) }
+                    : null
+                }
+                end={
+                  formData.endLatitude && formData.endLongitude
+                    ? { lat: Number(formData.endLatitude), lng: Number(formData.endLongitude) }
+                    : null
+                }
+              />
             </div>
           </div>
 
@@ -273,15 +363,27 @@ const PostRide = () => {
             />
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center space-x-2 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="h-5 w-5" />
-            <span>{loading ? 'Posting Ride...' : 'Post Ride'}</span>
-          </button>
+          {/* Submit Buttons */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => handleCreateRide('active')}
+              className="w-full flex items-center justify-center space-x-2 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus className="h-5 w-5" />
+              <span>{loading ? 'Posting Ride...' : 'Post Ride'}</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => handleCreateRide('draft')}
+              className="w-full flex items-center justify-center space-x-2 py-3 bg-white text-primary-700 rounded-lg font-semibold border border-primary-300 hover:bg-primary-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span>{loading ? 'Saving Draft...' : 'Save as Draft'}</span>
+            </button>
+          </div>
         </form>
       </div>
     </div>

@@ -4,8 +4,10 @@ import { rideAPI } from '../utils/api';
 import RideCard from '../components/RideCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import toast from 'react-hot-toast';
+import { useWeb3 } from '../context/Web3Context';
 
 const SearchRides = () => {
+  const { user } = useWeb3();
   const [rides, setRides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -31,6 +33,24 @@ const SearchRides = () => {
       toast.error('Failed to fetch rides');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleNotifyMe = async () => {
+    if (!user?.id) {
+      toast.error('Please login to enable notifications');
+      return;
+    }
+
+    const searchFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, value]) => value !== '')
+    );
+
+    try {
+      await rideAPI.createSearchAlert(searchFilters);
+      toast.success('We will email you when a matching ride is available');
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to create alert');
     }
   };
 
@@ -190,6 +210,15 @@ const SearchRides = () => {
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No rides found</p>
             <p className="text-gray-400 mt-2">Try adjusting your search filters</p>
+
+            <div className="mt-6">
+              <button
+                onClick={handleNotifyMe}
+                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+              >
+                Notify me when available
+              </button>
+            </div>
           </div>
         )}
       </div>
