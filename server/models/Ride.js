@@ -76,7 +76,7 @@ const Ride = sequelize.define('Ride', {
     field: 'vehicle_info'
   },
   status: {
-    type: DataTypes.ENUM('active', 'completed', 'cancelled'),
+    type: DataTypes.ENUM('draft', 'active', 'completed', 'cancelled'),
     defaultValue: 'active'
   },
   notes: {

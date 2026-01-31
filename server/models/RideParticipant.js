@@ -25,9 +25,15 @@ const RideParticipant = sequelize.define('RideParticipant', {
       key: 'id'
     }
   },
+  seatsBooked: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+    field: 'seats_booked'
+  },
   status: {
-    type: DataTypes.ENUM('joined', 'left', 'completed'),
-    defaultValue: 'joined'
+    type: DataTypes.ENUM('pending', 'accepted', 'rejected', 'expired', 'joined', 'left', 'completed'),
+    defaultValue: 'pending'
   },
   joinedAt: {
     type: DataTypes.DATE,

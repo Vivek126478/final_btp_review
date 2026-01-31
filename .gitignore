@@ -19,6 +19,10 @@ yarn.lock
 .env.staging
 *.env
 *.env.*
+!.env.example
+!client/.env.example
+!server/.env.example
+!contracts/.env.example
 
 # Blockchain & Crypto - Private Keys & Secrets
 *.secret

@@ -1,6 +1,11 @@
 const { User, EmailVerification } = require('../models');
 const bcrypt = require('bcryptjs');
 
+const isAllowedEmail = (email) => {
+  const allowedDomain = process.env.ALLOWED_EMAIL_DOMAIN || '@iiitkottayam.ac.in';
+  return typeof email === 'string' && email.endsWith(allowedDomain);
+};
+
 // Check if email exists (for routing logic)
 exports.checkEmail = async (req, res) => {
   try {
@@ -8,6 +13,10 @@ exports.checkEmail = async (req, res) => {
 
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
+    }
+
+    if (!isAllowedEmail(email)) {
+      return res.status(400).json({ error: 'Only @iiitkottayam.ac.in emails are allowed' });
     }
 
     const user = await User.findOne({ where: { email } });
@@ -30,6 +39,10 @@ exports.signup = async (req, res) => {
     // Validation
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Username, email, and password are required' });
+    }
+
+    if (!isAllowedEmail(email)) {
+      return res.status(400).json({ error: 'Only @iiitkottayam.ac.in emails are allowed' });
     }
 
     if (password.length < 8) {
@@ -114,6 +127,10 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    if (!isAllowedEmail(email)) {
+      return res.status(400).json({ error: 'Only @iiitkottayam.ac.in emails are allowed' });
+    }
+
     // Find user by email
     const user = await User.findOne({ where: { email } });
 
@@ -184,6 +201,9 @@ exports.updateProfile = async (req, res) => {
 
     // Check if email is taken by another user
     if (email && email !== user.email) {
+      if (!isAllowedEmail(email)) {
+        return res.status(400).json({ error: 'Only @iiitkottayam.ac.in emails are allowed' });
+      }
       const existingUser = await User.findOne({ where: { email } });
       if (existingUser) {
         return res.status(400).json({ error: 'Email already taken' });

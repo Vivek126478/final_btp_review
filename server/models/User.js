@@ -10,18 +10,16 @@ const User = sequelize.define('User', {
   walletAddress: {
     type: DataTypes.STRING(42),
     allowNull: true,
-    unique: true,
     field: 'wallet_address'
   },
   username: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    unique: true
+    
   },
   email: {
     type: DataTypes.STRING(100),
     allowNull: false,
-    unique: true,
     validate: {
       isEmail: true
     }

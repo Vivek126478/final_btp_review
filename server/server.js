@@ -1,10 +1,23 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+const rootEnvPath = path.join(__dirname, '../.env');
+const rootEnvExamplePath = path.join(__dirname, '../.env.example');
+const envPath = fs.existsSync(rootEnvPath) ? rootEnvPath : rootEnvExamplePath;
+require('dotenv').config({ path: envPath });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason);
+});
 
 // Middleware
 app.use(cors());
@@ -67,7 +80,7 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`
 ╔═══════════════════════════════════════════╗
 ║                                           ║
@@ -86,6 +99,9 @@ app.listen(PORT, () => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM signal received: closing HTTP server');
+  if (!server) {
+    process.exit(0);
+  }
   server.close(() => {
     console.log('HTTP server closed');
     process.exit(0);

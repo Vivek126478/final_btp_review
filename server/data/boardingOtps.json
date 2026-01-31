@@ -1,0 +1,22 @@
+{
+  "rides": {
+    "7": {
+      "rideId": 7,
+      "createdAt": 1769856414547,
+      "expiresAt": 1769857014547,
+      "ttlMinutes": 10,
+      "salt": "fc1ac5e9cc95744b44653a6810ec7298",
+      "started": false,
+      "participants": {
+        "6": {
+          "participantId": 6,
+          "riderId": 18,
+          "email": "pagidela22bcy23@iiitkottayam.ac.in",
+          "status": "pending",
+          "otpHash": "7e3570e17d31d3da03cdca04bf7b6cec5818046895236315e70e3e81f778de4f",
+          "verifiedAt": null
+        }
+      }
+    }
+  }
+}
