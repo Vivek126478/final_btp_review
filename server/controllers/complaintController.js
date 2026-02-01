@@ -1,4 +1,5 @@
 const { Complaint, User, Ride } = require('../models');
+const { getEthers, getDisputeResolutionContract } = require('../utils/blockchain');
 
 // File a complaint
 exports.fileComplaint = async (req, res) => {
@@ -26,6 +27,58 @@ exports.fileComplaint = async (req, res) => {
       description,
       status: 'pending'
     });
+
+    // Best-effort on-chain anchoring (local hardhat): open a dispute with evidence hash.
+    // We use ride.blockchainRideId (not DB id) so it matches the on-chain ride index.
+    try {
+      if (rideId) {
+        const ride = await Ride.findByPk(rideId);
+        if (ride && ride.blockchainRideId !== null && ride.blockchainRideId !== undefined) {
+          const { keccak256, toUtf8Bytes } = getEthers();
+
+          const payload = {
+            complaintId: complaint.id,
+            rideId: Number(ride.blockchainRideId),
+            complainantId: req.user.id,
+            accusedId,
+            category,
+            description
+          };
+
+          const evidenceHash = keccak256(toUtf8Bytes(JSON.stringify(payload)));
+
+          const dispute = getDisputeResolutionContract();
+
+          const tx = await dispute.openDispute(Number(ride.blockchainRideId), evidenceHash);
+          const receipt = await tx.wait();
+
+          let disputeId = null;
+          try {
+            const ev = receipt?.logs
+              ? receipt.logs
+                  .map((l) => {
+                    try {
+                      return dispute.interface.parseLog(l);
+                    } catch {
+                      return null;
+                    }
+                  })
+                  .find((x) => x && x.name === 'DisputeOpened')
+              : null;
+            disputeId = ev?.args?.disputeId !== undefined ? Number(ev.args.disputeId) : null;
+          } catch {
+            disputeId = null;
+          }
+
+          await complaint.update({
+            blockchainTxHash: receipt?.hash || tx?.hash || null,
+            blockchainDisputeId: disputeId
+          });
+        }
+      }
+    } catch (chainError) {
+      console.error('On-chain dispute anchoring failed (best effort):', chainError);
+    }
 
     res.status(201).json({
       message: 'Complaint filed successfully',

@@ -29,6 +29,8 @@ contract RideContract {
     mapping(address => uint256[]) public driverRides;
     mapping(address => uint256[]) public riderRides;
 
+    mapping(uint256 => uint256) public rideStartedAt;
+
     event RideCreated(
         uint256 indexed rideId,
         address indexed driver,
@@ -37,6 +39,7 @@ contract RideContract {
         uint256 dateTime,
         uint8 totalSeats
     );
+    event RideStarted(uint256 indexed rideId, uint256 timestamp);
     event RideJoined(uint256 indexed rideId, address indexed rider, uint256 timestamp);
     event RideLeft(uint256 indexed rideId, address indexed rider, uint256 timestamp);
     event RideCompleted(uint256 indexed rideId, uint256 timestamp);
@@ -105,6 +108,15 @@ contract RideContract {
         riderRides[msg.sender].push(_rideId);
 
         emit RideJoined(_rideId, msg.sender, block.timestamp);
+    }
+
+    function startRide(uint256 _rideId) public rideExists(_rideId) onlyDriver(_rideId) {
+        Ride storage ride = rides[_rideId];
+        require(ride.status == RideStatus.ACTIVE, "Ride is not active");
+        require(rideStartedAt[_rideId] == 0, "Ride already started");
+
+        rideStartedAt[_rideId] = block.timestamp;
+        emit RideStarted(_rideId, block.timestamp);
     }
 
     function leaveRide(uint256 _rideId) public rideExists(_rideId) {

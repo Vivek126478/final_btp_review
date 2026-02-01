@@ -52,6 +52,14 @@ const Complaint = sequelize.define('Complaint', {
   resolvedAt: {
     type: DataTypes.DATE,
     field: 'resolved_at'
+  },
+  blockchainTxHash: {
+    type: DataTypes.STRING(66),
+    field: 'blockchain_tx_hash'
+  },
+  blockchainDisputeId: {
+    type: DataTypes.INTEGER,
+    field: 'blockchain_dispute_id'
   }
 }, {
   tableName: 'complaints',

@@ -34,6 +34,8 @@ const {
   isUserFlagged
 } = require('../utils/moderationStore');
 
+const { getRideContract } = require('../utils/blockchain');
+
 // Create a new ride
 exports.createRide = async (req, res) => {
   try {
@@ -299,6 +301,18 @@ exports.startRideBoardingOTP = async (req, res) => {
     }
 
     const status = getBoardingStatus({ rideId: ride.id });
+
+    // Best-effort on-chain ride start marker
+    try {
+      if (ride.blockchainRideId !== null && ride.blockchainRideId !== undefined) {
+        const rideContract = getRideContract();
+        const tx = await rideContract.startRide(Number(ride.blockchainRideId));
+        await tx.wait();
+      }
+    } catch (chainError) {
+      console.error('On-chain startRide failed (best effort):', chainError);
+    }
+
     return res.json({ message: 'Boarding OTPs sent', status });
   } catch (error) {
     console.error('Start boarding OTP error:', error);
@@ -1449,6 +1463,17 @@ exports.completeRide = async (req, res) => {
         }
       }
     );
+
+    // Best-effort on-chain ride completion marker
+    try {
+      if (ride.blockchainRideId !== null && ride.blockchainRideId !== undefined) {
+        const rideContract = getRideContract();
+        const tx = await rideContract.completeRide(Number(ride.blockchainRideId));
+        await tx.wait();
+      }
+    } catch (chainError) {
+      console.error('On-chain completeRide failed (best effort):', chainError);
+    }
 
     res.json({
       message: 'Ride completed successfully',
