@@ -25,7 +25,7 @@ const Login = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (isConnected) {
-      navigate('/search', { replace: true });
+      navigate('/ticket-check', { replace: true });
     }
   }, [isConnected, navigate]);
 
@@ -42,9 +42,11 @@ const Login = () => {
     }
 
     try {
-      await login(formData.email, formData.password);
-      // Navigation will be handled by useEffect when isConnected becomes true
-    } catch (error) {
+      const user = await login(formData.email, formData.password);
+      
+      toast.success('Login successful!');
+      navigate('/ticket-check');
+    } catch (err) {
       // Error already shown in Web3Context
     }
   };
@@ -114,8 +116,7 @@ const Login = () => {
                 </>
               ) : (
                 <>
-                  <LogIn className="h-5 w-5" />
-                  <span>Login</span>
+                  <span>Login & Connect Wallet</span>
                 </>
               )}
             </button>

@@ -18,6 +18,9 @@ const Profile = () => {
     phoneNumber: '',
     bio: ''
   });
+  const [sbtStatus, setSbtStatus] = useState('unminted');
+  const [mintProgress, setMintProgress] = useState(0);
+  const [mintMessage, setMintMessage] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -28,6 +31,7 @@ const Profile = () => {
         phoneNumber: user.phoneNumber || '',
         bio: user.bio || ''
       });
+      setSbtStatus(localStorage.getItem(`sbt_${user.id}`) || 'unminted');
     }
   }, [user]);
 
@@ -53,6 +57,29 @@ const Profile = () => {
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to update profile');
     }
+  };
+
+  const handleMintSBT = async () => {
+    setSbtStatus('minting');
+    setMintProgress(10);
+    setMintMessage('Authenticating .edu domain...');
+    
+    setTimeout(() => {
+       setMintProgress(50);
+       setMintMessage('Minting Token to Blockchain...');
+       
+       authAPI.mintSBT({ walletAddress: user?.walletAddress || user?.id }).then(res => {
+          setMintProgress(100);
+          setMintMessage('Token Minted Successfully!');
+          setTimeout(() => {
+             setSbtStatus('minted');
+             if(user?.id) localStorage.setItem(`sbt_${user.id}`, 'minted');
+          }, 1500);
+       }).catch(err => {
+          toast.error(err.response?.data?.error || 'Failed to mint SBT');
+          setSbtStatus('unminted');
+       });
+    }, 2000);
   };
 
   if (loading) {
@@ -153,6 +180,67 @@ const Profile = () => {
                   <span className="font-medium">Bio:</span> {user.bio}
                 </p>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* Soulbound Token (SBT) Section */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4 flex items-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <span>Academic Identity SBT</span>
+          </h2>
+          
+          {sbtStatus === 'unminted' && (
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50 flex flex-col items-center">
+               <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                 <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.092 2.022-.27 3.012m-2.275 6.002c.15-.22.285-.453.407-.698M16 11a4 4 0 10-8 0m8 0c0 1.017-.092 2.022-.27 3.012"></path></svg>
+               </div>
+               <h3 className="text-lg font-semibold text-gray-700 mb-2">Unminted Identity</h3>
+               <p className="text-gray-500 mb-6 max-w-md">Mint your Soulbound Token to permanently verify your .edu academic credentials on the blockchain.</p>
+               <button onClick={handleMintSBT} className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-bold shadow-lg transform hover:scale-105 transition-all">
+                 Mint My SBT Target
+               </button>
+            </div>
+          )}
+
+          {sbtStatus === 'minting' && (
+            <div className="border border-indigo-100 rounded-lg p-8 text-center bg-indigo-50 flex flex-col items-center">
+               <div className="text-lg font-semibold text-indigo-700 mb-4">{mintMessage}</div>
+               <div className="w-full max-w-md bg-gray-200 rounded-full h-4 mb-2 overflow-hidden shadow-inner">
+                 <div className="bg-gradient-to-r from-indigo-500 to-purple-500 h-4 rounded-full transition-all duration-500 ease-out" style={{ width: `${mintProgress}%` }}></div>
+               </div>
+               <div className="text-sm text-indigo-500 animate-pulse">Communicating with Smart Contract node...</div>
+            </div>
+          )}
+
+          {sbtStatus === 'minted' && (
+            <div className="relative overflow-hidden rounded-xl p-8 text-white shadow-2xl" style={{background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)'}}>
+               <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
+               <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-white opacity-20 rounded-full blur-xl"></div>
+               <div className="relative z-10 flex items-center justify-between">
+                 <div>
+                   <div className="flex items-center space-x-2 mb-1">
+                     <span className="bg-white text-indigo-800 text-xs font-bold px-2 py-1 rounded uppercase tracking-wide">Verified Holder</span>
+                   </div>
+                   <h3 className="text-2xl font-black tracking-tight mb-2 holographic-text">Academic Soulbound Token</h3>
+                   <p className="text-indigo-100 font-medium">Immutable .edu Identity</p>
+                 </div>
+                 <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white border-opacity-30">
+                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                 </div>
+               </div>
+               <div className="mt-6 pt-6 border-t border-indigo-400 border-opacity-30 flex justify-between items-end relative z-10">
+                  <div>
+                    <div className="text-xs text-indigo-200 uppercase tracking-widest mb-1">Wallet Address</div>
+                    <div className="font-mono text-sm tracking-wider">{formatAddress(user?.walletAddress)}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-indigo-400 uppercase tracking-widest ml-auto text-right">Non-Transferable</div>
+                  </div>
+               </div>
             </div>
           )}
         </div>

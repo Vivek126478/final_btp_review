@@ -11,6 +11,10 @@ require('dotenv').config({ path: envPath });
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Initialize Cron Jobs
+const initPnrCron = require('./cron/pnrUpdater');
+initPnrCron();
+
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
 });
@@ -37,6 +41,7 @@ app.use('/api/rides', require('./routes/rides'));
 app.use('/api/ratings', require('./routes/ratings'));
 app.use('/api/complaints', require('./routes/complaints'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/tickets', require('./routes/tickets'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -6,10 +6,11 @@ const Rating = require('./Rating');
 const Complaint = require('./Complaint');
 const SOSAlert = require('./SOSAlert');
 const EmailVerification = require('./EmailVerification');
+const Ticket = require('./Ticket');
 
 // Define associations
-User.hasMany(Ride, { foreignKey: 'driverId', as: 'drivenRides' });
-Ride.belongsTo(User, { foreignKey: 'driverId', as: 'driver' });
+User.hasMany(Ride, { foreignKey: 'hostId', as: 'hostedRides' });
+Ride.belongsTo(User, { foreignKey: 'hostId', as: 'host' });
 
 User.hasMany(RideParticipant, { foreignKey: 'riderId', as: 'participations' });
 RideParticipant.belongsTo(User, { foreignKey: 'riderId', as: 'rider' });
@@ -33,6 +34,9 @@ User.hasMany(SOSAlert, { foreignKey: 'userId', as: 'sosAlerts' });
 SOSAlert.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 SOSAlert.belongsTo(Ride, { foreignKey: 'rideId', as: 'ride' });
 
+User.hasOne(Ticket, { foreignKey: 'userId', as: 'activeTicket' });
+Ticket.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 module.exports = {
   sequelize,
   User,
@@ -41,5 +45,6 @@ module.exports = {
   Rating,
   Complaint,
   SOSAlert,
-  EmailVerification
+  EmailVerification,
+  Ticket
 };

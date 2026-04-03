@@ -1,1 +1,452 @@
-[]
+[
+  {
+    "inputs": [],
+    "name": "ECDSAInvalidSignature",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "length",
+        "type": "uint256"
+      }
+    ],
+    "name": "ECDSAInvalidSignatureLength",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "s",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ECDSAInvalidSignatureS",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "rater",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "ratee",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "rideId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "stars",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "RatingSubmitted",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getAverageRatingFormatted",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getRatingsGiven",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "rater",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "ratee",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rideId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "stars",
+            "type": "uint8"
+          },
+          {
+            "internalType": "string",
+            "name": "comment",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct Reputation.Rating[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getRatingsReceived",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "rater",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "ratee",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rideId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "stars",
+            "type": "uint8"
+          },
+          {
+            "internalType": "string",
+            "name": "comment",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct Reputation.Rating[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_user",
+        "type": "address"
+      }
+    ],
+    "name": "getUserReputation",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "totalRatings",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "averageRating",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "hasRated",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_rater",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_ratee",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_rideId",
+        "type": "uint256"
+      }
+    ],
+    "name": "hasUserRated",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "ratingsGiven",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "rater",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "ratee",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "rideId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint8",
+        "name": "stars",
+        "type": "uint8"
+      },
+      {
+        "internalType": "string",
+        "name": "comment",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "ratingsReceived",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "rater",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "ratee",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "rideId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint8",
+        "name": "stars",
+        "type": "uint8"
+      },
+      {
+        "internalType": "string",
+        "name": "comment",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_ratee",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_rideId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint8",
+        "name": "_stars",
+        "type": "uint8"
+      },
+      {
+        "internalType": "string",
+        "name": "_comment",
+        "type": "string"
+      }
+    ],
+    "name": "submitRating",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_rater",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_ratee",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_rideId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint8",
+        "name": "_stars",
+        "type": "uint8"
+      },
+      {
+        "internalType": "string",
+        "name": "_comment",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_signature",
+        "type": "bytes"
+      }
+    ],
+    "name": "submitRatingGasless",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "userReputations",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "totalRatings",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "sumOfStars",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "averageRating",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

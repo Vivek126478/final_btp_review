@@ -8,7 +8,7 @@ import axios from 'axios';
 import { API_BASE_URL } from '../config/contracts';
 
 const SignupLogin = () => {
-  const { isConnected, updateUser } = useWeb3();
+  const { isConnected, connect } = useWeb3();
   const navigate = useNavigate();
   const [verifiedEmail, setVerifiedEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -25,9 +25,9 @@ const SignupLogin = () => {
   });
 
   useEffect(() => {
-    // If already logged in, redirect to search
+    // If already logged in, redirect to ticket check
     if (isConnected) {
-      navigate('/search');
+      navigate('/ticket-check');
       return;
     }
 
@@ -96,27 +96,22 @@ const SignupLogin = () => {
 
     setLoading(true);
     try {
-      // Register without wallet (wallet can be added later)
-      const response = await axios.post(`${API_BASE_URL}/auth/signup`, {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        phoneNumber: formData.phoneNumber || null,
-        gender: formData.gender || null,
-        bio: formData.bio || null
-      });
+      await connect(
+        formData.username,
+        formData.email,
+        formData.password,
+        {
+          phoneNumber: formData.phoneNumber || null,
+          gender: formData.gender || null,
+          bio: formData.bio || null
+        }
+      );
       
-      const { user } = response.data;
-      
-      // Save user to localStorage and auto-login
-      localStorage.setItem('user', JSON.stringify(user));
       localStorage.removeItem('verifiedEmail');
-      
-      toast.success('Account created successfully! Welcome to Campus Wheels!');
       
       // Reload page to update context state, then redirect
       setTimeout(() => {
-        window.location.href = '/search';
+        window.location.href = '/ticket-check';
       }, 1000);
     } catch (error) {
       console.error('Registration failed:', error);
@@ -322,7 +317,7 @@ const SignupLogin = () => {
                 </>
               ) : (
                 <>
-                  <span>Create Account</span>
+                  <span>Create Account & Connect Wallet</span>
                   <ArrowRight className="h-5 w-5" />
                 </>
               )}

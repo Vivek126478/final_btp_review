@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+
 contract Reputation {
     struct Rating {
         address rater;
@@ -68,6 +69,7 @@ contract Reputation {
 
         emit RatingSubmitted(msg.sender, _ratee, _rideId, _stars, block.timestamp);
     }
+
 
     function getUserReputation(address _user) public view returns (
         uint256 totalRatings,

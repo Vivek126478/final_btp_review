@@ -1,4 +1,5 @@
 const { Ride, RideParticipant, User, sequelize } = require('../models');
+const crypto = require('crypto');
 const { Op } = require('sequelize');
 const {
   sendRideJoinRequestEmail,
@@ -52,6 +53,7 @@ exports.createRide = async (req, res) => {
       pricePerSeat,
       tags,
       vehicleInfo,
+      driverDetails,
       notes,
       status
     } = req.body;
@@ -64,7 +66,7 @@ exports.createRide = async (req, res) => {
     if (requestedStatus === 'active') {
       const existingActiveRide = await Ride.findOne({
         where: {
-          driverId: req.user.id,
+          hostId: req.user.id,
           status: 'active'
         }
       });
@@ -77,9 +79,41 @@ exports.createRide = async (req, res) => {
       }
     }
 
+    let computedAgreementHash = null;
+    let agreementHashHex = null;
+    let finalBlockchainRideId = blockchainRideId;
+    let agreementRawString = null;
+
+    if (requestedStatus === 'active') {
+      try {
+        agreementRawString = `${startLocation}|${endLocation}|${pricePerSeat || 0}|${driverDetails?.name || ''}|${vehicleInfo?.plate || ''}`;
+        computedAgreementHash = crypto.createHash('sha256').update(agreementRawString).digest('hex');
+        agreementHashHex = '0x' + computedAgreementHash;
+
+        const rideContract = getRideContract();
+        const txCreate = await rideContract.createRide(startLocation, endLocation, Math.floor(new Date(rideDateTime).getTime() / 1000), totalSeats, tags || []);
+        const receipt = await txCreate.wait();
+
+        const event = receipt.logs.find(l => {
+          try { return rideContract.interface.parseLog(l)?.name === 'RideCreated'; } catch(e) {return false;}
+        });
+        if (event) {
+          const parsed = rideContract.interface.parseLog(event);
+          finalBlockchainRideId = parsed.args.rideId.toString();
+        }
+
+        if (finalBlockchainRideId !== null) {
+          const txAnchor = await rideContract.anchorRideAgreement(finalBlockchainRideId, agreementHashHex);
+          await txAnchor.wait();
+        }
+      } catch (err) {
+        console.error('Blockchain creation/anchoring failed:', err);
+      }
+    }
+
     const ride = await Ride.create({
-      blockchainRideId,
-      driverId: req.user.id,
+      blockchainRideId: finalBlockchainRideId,
+      hostId: req.user.id,
       startLocation,
       endLocation,
       startLatitude,
@@ -92,8 +126,11 @@ exports.createRide = async (req, res) => {
       pricePerSeat: pricePerSeat || 0,
       tags: tags || [],
       vehicleInfo: null,
+      driverDetails: driverDetails || null,
       notes: null,
-      status: requestedStatus
+      status: requestedStatus,
+      agreementHash: computedAgreementHash,
+      agreementData: agreementRawString
     });
 
     // CP-ABE: create host key + encrypt sensitive ride fields (best effort)
@@ -197,7 +234,7 @@ exports.blockRider = async (req, res) => {
     const { id, riderId } = req.params;
     const ride = await Ride.findByPk(id);
     if (!ride) return res.status(404).json({ error: 'Ride not found' });
-    if (ride.driverId !== req.user.id) {
+    if (ride.hostId !== req.user.id) {
       return res.status(403).json({ error: 'Only the host can block riders' });
     }
 
@@ -230,7 +267,7 @@ exports.unblockRider = async (req, res) => {
     const { id, riderId } = req.params;
     const ride = await Ride.findByPk(id);
     if (!ride) return res.status(404).json({ error: 'Ride not found' });
-    if (ride.driverId !== req.user.id) {
+    if (ride.hostId !== req.user.id) {
       return res.status(403).json({ error: 'Only the host can unblock riders' });
     }
 
@@ -248,7 +285,7 @@ exports.startRideBoardingOTP = async (req, res) => {
     const ride = await Ride.findByPk(id);
     if (!ride) return res.status(404).json({ error: 'Ride not found' });
 
-    if (ride.driverId !== req.user.id) {
+    if (ride.hostId !== req.user.id) {
       return res.status(403).json({ error: 'Only the host can start boarding verification' });
     }
 
@@ -329,7 +366,7 @@ exports.getRideBoardingStatus = async (req, res) => {
     const ride = await Ride.findByPk(id);
     if (!ride) return res.status(404).json({ error: 'Ride not found' });
 
-    if (ride.driverId !== req.user.id) {
+    if (ride.hostId !== req.user.id) {
       return res.status(403).json({ error: 'Only the host can view boarding status' });
     }
 
@@ -357,7 +394,7 @@ exports.verifyRidePassengerOTP = async (req, res) => {
     const ride = await Ride.findByPk(id);
     if (!ride) return res.status(404).json({ error: 'Ride not found' });
 
-    if (ride.driverId !== req.user.id) {
+    if (ride.hostId !== req.user.id) {
       return res.status(403).json({ error: 'Only the host can verify passenger OTPs' });
     }
 
@@ -419,7 +456,7 @@ exports.inviteToRide = async (req, res) => {
       return res.status(404).json({ error: 'Ride not found' });
     }
 
-    const isHost = ride.driverId === req.user.id;
+    const isHost = ride.hostId === req.user.id;
 
     let isAcceptedRider = false;
     if (!isHost) {
@@ -498,7 +535,7 @@ exports.updateRide = async (req, res) => {
       return res.status(404).json({ error: 'Ride not found' });
     }
 
-    if (ride.driverId !== req.user.id) {
+    if (ride.hostId !== req.user.id) {
       return res.status(403).json({ error: 'Only the driver can update this ride' });
     }
 
@@ -527,7 +564,7 @@ exports.updateRide = async (req, res) => {
     if (requestedStatus === 'active' && ride.status !== 'active') {
       const existingActiveRide = await Ride.findOne({
         where: {
-          driverId: req.user.id,
+          hostId: req.user.id,
           status: 'active',
           id: { [Op.ne]: ride.id }
         }
@@ -736,7 +773,7 @@ exports.publishDraftRide = async (req, res) => {
       return res.status(404).json({ error: 'Ride not found' });
     }
 
-    if (ride.driverId !== req.user.id) {
+    if (ride.hostId !== req.user.id) {
       return res.status(403).json({ error: 'Only the driver can publish this ride' });
     }
 
@@ -746,7 +783,7 @@ exports.publishDraftRide = async (req, res) => {
 
     const existingActiveRide = await Ride.findOne({
       where: {
-        driverId: req.user.id,
+        hostId: req.user.id,
         status: 'active'
       }
     });
@@ -840,7 +877,7 @@ exports.searchRides = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'driver',
+          as: 'host',
           attributes: ['id', 'username', 'profilePicture', 'walletAddress']
         },
         {
@@ -903,7 +940,7 @@ exports.getRideById = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'driver',
+          as: 'host',
           attributes: ['id', 'username', 'email', 'phoneNumber', 'profilePicture', 'walletAddress']
         },
         {
@@ -925,14 +962,14 @@ exports.getRideById = async (req, res) => {
     }
 
     if (ride.status === 'draft') {
-      if (!req.user || ride.driverId !== req.user.id) {
+      if (!req.user || ride.hostId !== req.user.id) {
         return res.status(403).json({ error: 'Not authorized to access this ride' });
       }
     }
 
     // Privacy: hide contact details until the host accepts.
     const viewerUserId = req.user ? req.user.id : null;
-    const isHost = viewerUserId && ride.driverId === viewerUserId;
+    const isHost = viewerUserId && ride.hostId === viewerUserId;
 
     const acceptedForViewer = Array.isArray(ride.participants)
       ? ride.participants.some(p =>
@@ -971,9 +1008,9 @@ exports.getRideById = async (req, res) => {
     }
 
     if (!isHost && !acceptedForViewer) {
-      if (ride.driver) {
-        ride.driver.email = undefined;
-        ride.driver.phoneNumber = undefined;
+      if (ride.host) {
+        ride.host.email = undefined;
+        ride.host.phoneNumber = undefined;
       }
     }
 
@@ -1024,7 +1061,7 @@ exports.joinRide = async (req, res) => {
       return res.status(400).json({ error: 'Ride is not active' });
     }
 
-    if (ride.driverId === req.user.id) {
+    if (ride.hostId === req.user.id) {
       return res.status(400).json({ error: 'Cannot join your own ride' });
     }
 
@@ -1036,7 +1073,7 @@ exports.joinRide = async (req, res) => {
     }
 
     // Host-local blocklist
-    if (isRiderBlockedByHost({ hostId: ride.driverId, riderId: req.user.id })) {
+    if (isRiderBlockedByHost({ hostId: ride.hostId, riderId: req.user.id })) {
       return res.status(403).json({ error: 'You are blocked by this host' });
     }
 
@@ -1121,7 +1158,7 @@ exports.joinRide = async (req, res) => {
 
     // Notify host via email (best effort)
     try {
-      const host = await User.findByPk(ride.driverId);
+      const host = await User.findByPk(ride.hostId);
       if (host) {
         await sendRideJoinRequestEmail({
           hostEmail: host.email,
@@ -1157,7 +1194,7 @@ exports.acceptJoinRequest = async (req, res) => {
       return res.status(404).json({ error: 'Ride not found' });
     }
 
-    if (ride.driverId !== req.user.id) {
+    if (ride.hostId !== req.user.id) {
       await t.rollback();
       return res.status(403).json({ error: 'Only the driver can accept requests' });
     }
@@ -1219,7 +1256,7 @@ exports.acceptJoinRequest = async (req, res) => {
 
     // Email both parties (best effort)
     try {
-      const host = await User.findByPk(ride.driverId);
+      const host = await User.findByPk(ride.hostId);
       const rider = participant.rider;
       const totalCost = Number(ride.pricePerSeat || 0) * seatsBooked;
 
@@ -1272,7 +1309,7 @@ exports.rejectJoinRequest = async (req, res) => {
       return res.status(404).json({ error: 'Ride not found' });
     }
 
-    if (ride.driverId !== req.user.id) {
+    if (ride.hostId !== req.user.id) {
       return res.status(403).json({ error: 'Only the driver can reject requests' });
     }
 
@@ -1392,7 +1429,7 @@ exports.cancelRide = async (req, res) => {
       return res.status(404).json({ error: 'Ride not found' });
     }
 
-    if (ride.driverId !== req.user.id) {
+    if (ride.hostId !== req.user.id) {
       return res.status(403).json({ error: 'Only the driver can cancel the ride' });
     }
 
@@ -1443,7 +1480,7 @@ exports.completeRide = async (req, res) => {
       return res.status(404).json({ error: 'Ride not found' });
     }
 
-    if (ride.driverId !== req.user.id) {
+    if (ride.hostId !== req.user.id) {
       return res.status(403).json({ error: 'Only the driver can complete the ride' });
     }
 
@@ -1485,6 +1522,40 @@ exports.completeRide = async (req, res) => {
   }
 };
 
+// Verify Driver Credentials with mock ZKP
+exports.verifyZKProof = async (req, res) => {
+  try {
+     const { id } = req.params;
+     const { zkProof, publicSignal } = req.body;
+     const ride = await Ride.findByPk(id);
+     
+     if (!ride) return res.status(404).json({ error: 'Ride not found' });
+     if (ride.hostId !== req.user.id) return res.status(403).json({ error: 'Only the host can verify driver credentials' });
+     
+     if(ride.blockchainRideId === null) {
+         return res.status(400).json({ error: 'Ride is not on-chain yet' });
+     }
+     
+     const { getZKPDriverVerifierContract } = require('../utils/blockchain');
+     const zkpContract = getZKPDriverVerifierContract();
+     
+     const tx = await zkpContract.verifyDriverZKProof(
+         ride.blockchainRideId,
+         zkProof || "0xab12",
+         publicSignal || "0x0000000000000000000000000000000000000000000000000000000000000001",
+         { gasLimit: 500000 }
+     );
+     await tx.wait();
+     
+     await ride.update({ zkVerified: true });
+     
+     res.json({ message: 'Zero-Knowledge Proof verified on-chain!', txHash: tx.hash });
+  } catch(error) {
+     console.error('ZK Verify Error:', error);
+     res.status(500).json({ error: 'Failed to verify ZK proof: ' + error.message });
+  }
+};
+
 // Get user's rides (as driver or rider)
 exports.getUserRides = async (req, res) => {
   try {
@@ -1495,7 +1566,7 @@ exports.getUserRides = async (req, res) => {
 
     if (type === 'driver' || type === 'all') {
       driverRides = await Ride.findAll({
-        where: { driverId: req.user.id },
+        where: { hostId: req.user.id },
         include: [
           {
             model: RideParticipant,
@@ -1523,7 +1594,7 @@ exports.getUserRides = async (req, res) => {
             include: [
               {
                 model: User,
-                as: 'driver',
+                as: 'host',
                 attributes: ['id', 'username', 'profilePicture']
               }
             ]

@@ -15,7 +15,7 @@ exports.triggerSOS = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'driver',
+          as: 'host',
           attributes: ['id', 'username', 'email', 'phoneNumber']
         }
       ]
@@ -42,8 +42,8 @@ exports.triggerSOS = async (req, res) => {
       userName: req.user.username,
       userEmail: req.user.email,
       userPhone: req.user.phoneNumber,
-      driverName: ride.driver.username,
-      driverPhone: ride.driver.phoneNumber,
+      driverName: ride.host.username,
+      driverPhone: ride.host.phoneNumber,
       rideDetails: {
         startLocation: ride.startLocation,
         endLocation: ride.endLocation,
@@ -98,7 +98,7 @@ exports.getSOSAlerts = async (req, res) => {
           include: [
             {
               model: User,
-              as: 'driver',
+              as: 'host',
               attributes: ['id', 'username', 'phoneNumber']
             }
           ]

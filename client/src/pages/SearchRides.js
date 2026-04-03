@@ -5,11 +5,14 @@ import RideCard from '../components/RideCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import toast from 'react-hot-toast';
 import { useWeb3 } from '../context/Web3Context';
+import api from '../utils/api';
+import { Ticket, Clock, CheckCircle2 } from 'lucide-react';
 
 const SearchRides = () => {
   const { user } = useWeb3();
   const [rides, setRides] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTicket, setActiveTicket] = useState(null);
   const [filters, setFilters] = useState({
     startLocation: '',
     endLocation: '',
@@ -20,14 +23,53 @@ const SearchRides = () => {
   });
 
   useEffect(() => {
-    fetchRides();
+    checkTicketAndFetch();
   }, []);
 
-  const fetchRides = async (searchFilters = {}) => {
+  const checkTicketAndFetch = async () => {
+    try {
+      const res = await api.get('/tickets/active');
+      const ticket = res.data.ticket;
+      if (ticket) {
+        setActiveTicket(ticket);
+        const tDate = new Date(ticket.departureTime).toISOString().split('T')[0];
+        
+        const autoFilters = {
+          startLocation: 'IIIT Kottayam',
+          endLocation: ticket.departureStation,
+          date: tDate,
+          minSeats: '', tags: '', maxPrice: ''
+        };
+        setFilters(autoFilters);
+        toast.success(`Active ${ticket.type} PNR found! Auto-mapping rides.`);
+        fetchRides(autoFilters, ticket);
+      } else {
+        fetchRides();
+      }
+    } catch (e) {
+      fetchRides();
+    }
+  };
+
+  const fetchRides = async (searchFilters = {}, overridingTicket = null) => {
     try {
       setLoading(true);
+      const ticketToUse = overridingTicket !== null ? overridingTicket : activeTicket;
       const response = await rideAPI.searchRides(searchFilters);
-      setRides(response.data.rides);
+      let fetched = response.data.rides;
+
+      // Smart 6-Hour Buffer Logic
+      if (ticketToUse) {
+        const ticketTime = new Date(ticketToUse.departureTime).getTime();
+        fetched = fetched.filter(ride => {
+           const rideTime = new Date(ride.departureTime).getTime();
+           const diffHours = (ticketTime - rideTime) / (1000 * 60 * 60);
+           // Must depart 1 to 9 hours before train (gives driving time + safe buffer)
+           return diffHours > 0 && diffHours <= 9;
+        });
+      }
+
+      setRides(fetched);
     } catch (error) {
       console.error('Error fetching rides:', error);
       toast.error('Failed to fetch rides');
@@ -78,6 +120,29 @@ const SearchRides = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Search Rides</h1>
+
+        {activeTicket && (
+          <div className="mb-8 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 p-6 shadow-sm flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-indigo-100 rounded-full">
+                <Ticket className="w-6 h-6 text-indigo-700" />
+              </div>
+              <div>
+                <h3 className="font-bold text-indigo-900 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500"/>
+                  Active {activeTicket.type.toUpperCase()} Journey Sync
+                </h3>
+                <p className="text-sm text-indigo-700 mt-1">
+                  PNR <strong>{activeTicket.pnr}</strong> departing from <strong>{activeTicket.departureStation}</strong> at {new Date(activeTicket.departureTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 text-sm font-semibold text-emerald-600 bg-emerald-50 px-4 py-2 rounded-lg border border-emerald-200">
+              <Clock className="w-4 h-4" />
+              <span>Smart 6-Hour Arrival Buffer Applied</span>
+            </div>
+          </div>
+        )}
 
         {/* Search Filters */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">

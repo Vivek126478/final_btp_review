@@ -15,11 +15,13 @@ module.exports = {
   networks: {
     localhost: {
       url: "http://127.0.0.1:8545",
-      gas: 15_000_000
+      gas: 15_000_000,
+      gasPrice: 1
     },
     hardhat: {
       chainId: 1337,
-      blockGasLimit: 15_000_000
+      blockGasLimit: 15_000_000,
+      initialBaseFeePerGas: 1
     }
   },
   paths: {

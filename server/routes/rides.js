@@ -63,4 +63,7 @@ router.post('/:id/cancel', authenticateToken, rideController.cancelRide);
 // POST /api/rides/:id/complete - Complete a ride
 router.post('/:id/complete', authenticateToken, rideController.completeRide);
 
+// POST /api/rides/:id/verify-zk-proof - Verify ZK Proof (host only)
+router.post('/:id/verify-zk-proof', authenticateToken, rideController.verifyZKProof);
+
 module.exports = router;

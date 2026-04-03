@@ -18,4 +18,7 @@ router.get('/me', authenticateToken, authController.getCurrentUser);
 // PUT /api/auth/profile - Update user profile
 router.put('/profile', authenticateToken, authController.updateProfile);
 
+// POST /api/auth/mint-sbt - Mint SBT for academic identity
+router.post('/mint-sbt', authenticateToken, authController.mintStudentSBT);
+
 module.exports = router;

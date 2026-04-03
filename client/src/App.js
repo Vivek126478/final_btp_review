@@ -12,9 +12,12 @@ import SearchRides from './pages/SearchRides';
 import PostRide from './pages/PostRide';
 import RideDetails from './pages/RideDetails';
 import EditRide from './pages/EditRide';
+import TicketCheck from './pages/TicketCheck';
+
 import MyRides from './pages/MyRides';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
+import Governance from './pages/Governance';
 
 function App() {
   return (
@@ -32,6 +35,17 @@ function App() {
             <Route path="/signup" element={<SignupLogin />} />
             
             {/* Login - For existing users */}
+            <Route path="/login" element={<Login />} />
+            
+            {/* PNR Check (Post-login) */}
+            <Route
+              path="/ticket-check"
+              element={
+                <ProtectedRoute>
+                  <TicketCheck />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/login" element={<Login />} />
             <Route
               path="/search"
@@ -106,6 +120,18 @@ function App() {
                 </>
               }
             />
+            <Route
+              path="/governance"
+              element={
+                <>
+                  <Navbar />
+                  <ProtectedRoute>
+                    <Governance />
+                  </ProtectedRoute>
+                </>
+              }
+            />
+
           </Routes>
           <Toaster
             position="top-right"

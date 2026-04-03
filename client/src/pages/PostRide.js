@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Car, Plus } from 'lucide-react';
 import { rideAPI } from '../utils/api';
 import toast from 'react-hot-toast';
-import PlacesAutocompleteInput from '../components/PlacesAutocompleteInput';
-import MapPreview from '../components/MapPreview';
-import { loadGoogleMaps } from '../utils/googleMaps';
+import LocationAutocomplete from '../components/LocationAutocomplete';
+import OpenStreetMapPreview from '../components/OpenStreetMapPreview';
 
 const RIDE_TAGS = [
   'Office Commute',
@@ -34,6 +33,9 @@ const PostRide = () => {
     pricePerSeat: 0,
     tags: [],
     notes: '',
+    driverName: '',
+    driverPhone: '',
+    driverLicense: '',
     vehicleMake: '',
     vehicleModel: '',
     vehicleColor: '',
@@ -69,19 +71,17 @@ const PostRide = () => {
 
       let addressText = 'Current location';
 
+      // Reverse geocode using OpenStreetMap Nominatim
       try {
-        const google = await loadGoogleMaps();
-        const geocoder = new google.maps.Geocoder();
-
-        const results = await new Promise((resolve, reject) => {
-          geocoder.geocode({ location: { lat, lng } }, (res, status) => {
-            if (status === 'OK') return resolve(res);
-            reject(new Error(status));
-          });
-        });
-
-        if (Array.isArray(results) && results[0]?.formatted_address) {
-          addressText = results[0].formatted_address;
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+          { headers: { 'User-Agent': 'D-Carpool-App' } }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.display_name) {
+            addressText = data.display_name;
+          }
         }
       } catch (e) {
         // Reverse geocoding is optional; fallback to plain text
@@ -113,6 +113,11 @@ const PostRide = () => {
     pricePerSeat: formData.pricePerSeat,
     tags: formData.tags,
     notes: formData.notes,
+    driverDetails: {
+      name: formData.driverName,
+      phone: formData.driverPhone,
+      license: formData.driverLicense
+    },
     vehicleInfo: {
       make: formData.vehicleMake,
       model: formData.vehicleModel,
@@ -151,19 +156,20 @@ const PostRide = () => {
             <h2 className="text-xl font-semibold mb-4">Route Information</h2>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <PlacesAutocompleteInput
+                <LocationAutocomplete
                   label="Start Location"
                   value={formData.startLocation}
                   onChange={(v) => setFormData({ ...formData, startLocation: v })}
-                  onPlaceSelected={({ lat, lng }) =>
+                  onPlaceSelected={({ address, lat, lng }) =>
                     setFormData({
                       ...formData,
+                      startLocation: address,
                       startLatitude: lat,
                       startLongitude: lng
                     })
                   }
                   required
-                  placeholder="Search a location"
+                  placeholder="Search pickup location..."
                 />
                 <button
                   type="button"
@@ -176,19 +182,20 @@ const PostRide = () => {
               </div>
 
               <div>
-                <PlacesAutocompleteInput
+                <LocationAutocomplete
                   label="End Location"
                   value={formData.endLocation}
                   onChange={(v) => setFormData({ ...formData, endLocation: v })}
-                  onPlaceSelected={({ lat, lng }) =>
+                  onPlaceSelected={({ address, lat, lng }) =>
                     setFormData({
                       ...formData,
+                      endLocation: address,
                       endLatitude: lat,
                       endLongitude: lng
                     })
                   }
                   required
-                  placeholder="Search a location"
+                  placeholder="Search drop-off location..."
                 />
               </div>
 
@@ -243,15 +250,15 @@ const PostRide = () => {
             </div>
 
             <div className="mt-4">
-              <MapPreview
+              <OpenStreetMapPreview
                 start={
                   formData.startLatitude && formData.startLongitude
-                    ? { lat: Number(formData.startLatitude), lng: Number(formData.startLongitude) }
+                    ? { lat: Number(formData.startLatitude), lng: Number(formData.startLongitude), address: formData.startLocation }
                     : null
                 }
                 end={
                   formData.endLatitude && formData.endLongitude
-                    ? { lat: Number(formData.endLatitude), lng: Number(formData.endLongitude) }
+                    ? { lat: Number(formData.endLatitude), lng: Number(formData.endLongitude), address: formData.endLocation }
                     : null
                 }
               />
@@ -278,6 +285,26 @@ const PostRide = () => {
                   {tag}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Driver Information */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4 mx-1">Driver Information</h2>
+            <p className="text-sm text-gray-500 mb-4 mx-1">As Host, provide the details of the physical driver.</p>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Driver Name</label>
+                <input type="text" value={formData.driverName} onChange={(e) => setFormData({ ...formData, driverName: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" placeholder="e.g., John Doe" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Driver Phone</label>
+                <input type="text" value={formData.driverPhone} onChange={(e) => setFormData({ ...formData, driverPhone: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" placeholder="e.g., +1 234 567 890" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Driver License / ID</label>
+                <input type="text" value={formData.driverLicense} onChange={(e) => setFormData({ ...formData, driverLicense: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" placeholder="Required for ZK Proof" />
+              </div>
             </div>
           </div>
 

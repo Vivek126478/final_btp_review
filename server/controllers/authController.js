@@ -31,10 +31,9 @@ exports.checkEmail = async (req, res) => {
   }
 };
 
-// Signup - Register new user
 exports.signup = async (req, res) => {
   try {
-    const { username, email, password, phoneNumber, gender, bio } = req.body;
+    const { username, email, password, phoneNumber, gender, bio, walletAddress } = req.body;
 
     // Validation
     if (!username || !email || !password) {
@@ -83,11 +82,12 @@ exports.signup = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user without wallet address
+    // Create new user with wallet address
     const user = await User.create({
       username,
       email,
       password: hashedPassword,
+      walletAddress: walletAddress || null,
       phoneNumber: phoneNumber || null,
       gender: gender || null,
       bio: bio || null
@@ -100,6 +100,7 @@ exports.signup = async (req, res) => {
       message: 'Account created successfully',
       user: {
         id: user.id,
+        walletAddress: user.walletAddress,
         username: user.username,
         email: user.email,
         phoneNumber: user.phoneNumber,
@@ -120,7 +121,7 @@ exports.signup = async (req, res) => {
 // Login - Authenticate existing user
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, walletAddress } = req.body;
 
     // Validation
     if (!email || !password) {
@@ -150,10 +151,19 @@ exports.login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    if (walletAddress && !user.walletAddress) {
+      const normalizedWalletAddress = String(walletAddress).trim();
+      const isValidWalletAddress = /^0x[a-fA-F0-9]{40}$/.test(normalizedWalletAddress);
+      if (isValidWalletAddress) {
+        await user.update({ walletAddress: normalizedWalletAddress });
+      }
+    }
+
     res.json({
       message: 'Login successful',
       user: {
         id: user.id,
+        walletAddress: user.walletAddress,
         username: user.username,
         email: user.email,
         phoneNumber: user.phoneNumber,
@@ -236,5 +246,29 @@ exports.updateProfile = async (req, res) => {
   } catch (error) {
     console.error('Update profile error:', error);
     res.status(500).json({ error: 'Failed to update profile' });
+  }
+};
+
+// Mint SBT for user (mocked for demo)
+exports.mintStudentSBT = async (req, res) => {
+  try {
+    const { getUserIdentityContract } = require('../utils/blockchain');
+    const userIdentityContract = getUserIdentityContract();
+    
+    // We expect the wallet address from the authenticated user or body payload
+    const walletAddress = req.user.walletAddress || req.body.walletAddress;
+    
+    if (!walletAddress) {
+      return res.status(400).json({ error: 'Wallet address is required to mint SBT' });
+    }
+    
+    // Using platform wallet to mint for the demonstration
+    const tx = await userIdentityContract.mintStudentSBT(walletAddress, { gasLimit: 500000 });
+    await tx.wait();
+    
+    res.json({ message: 'SBT successfully minted to blockchain', transactionHash: tx.hash });
+  } catch (err) {
+    console.error('Mint SBT error:', err);
+    res.status(500).json({ error: err.reason || err.message || 'Failed to mint SBT' });
   }
 };

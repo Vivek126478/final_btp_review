@@ -15,24 +15,24 @@ const RideCard = ({ ride }) => {
       onClick={handleClick}
       className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition cursor-pointer border border-gray-200"
     >
-      {/* Driver Info */}
+      {/* Host Info */}
       <div className="flex items-center space-x-3 mb-4">
         <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-          {ride.driver?.profilePicture ? (
+          {ride.host?.profilePicture ? (
             <img
-              src={ride.driver.profilePicture}
-              alt={ride.driver.username}
+              src={ride.host.profilePicture}
+              alt={ride.host.username}
               className="w-12 h-12 rounded-full object-cover"
             />
           ) : (
             <span className="text-primary-600 font-semibold text-lg">
-              {ride.driver?.username?.charAt(0).toUpperCase()}
+              {ride.host?.username?.charAt(0)?.toUpperCase() || '?'}
             </span>
           )}
         </div>
         <div>
-          <p className="font-semibold text-gray-900">{ride.driver?.username}</p>
-          <p className="text-sm text-gray-500">Driver</p>
+          <p className="font-semibold text-gray-900">{ride.host?.username || 'Unknown'}</p>
+          <p className="text-sm text-gray-500">Host</p>
         </div>
       </div>
 

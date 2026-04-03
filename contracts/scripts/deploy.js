@@ -56,6 +56,30 @@ async function main() {
   const disputeResolutionAddress = await disputeResolution.getAddress();
   console.log("✅ DisputeResolution deployed to:", disputeResolutionAddress);
 
+  // Deploy ZKPDriverVerifier Contract
+  console.log("\nDeploying ZKPDriverVerifier Contract...");
+  const ZKPDriverVerifier = await hre.ethers.getContractFactory("ZKPDriverVerifier");
+  const zkpDriverVerifier = await ZKPDriverVerifier.deploy(deployOverrides);
+  await zkpDriverVerifier.waitForDeployment();
+  const zkpDriverVerifierAddress = await zkpDriverVerifier.getAddress();
+  console.log("✅ ZKPDriverVerifier deployed to:", zkpDriverVerifierAddress);
+
+  // Deploy MerkleAuditTrail Contract
+  console.log("\nDeploying MerkleAuditTrail Contract...");
+  const MerkleAuditTrail = await hre.ethers.getContractFactory("MerkleAuditTrail");
+  const merkleAuditTrail = await MerkleAuditTrail.deploy(deployOverrides);
+  await merkleAuditTrail.waitForDeployment();
+  const merkleAuditTrailAddress = await merkleAuditTrail.getAddress();
+  console.log("✅ MerkleAuditTrail deployed to:", merkleAuditTrailAddress);
+
+  // Deploy ShamirSOSVault Contract
+  console.log("\nDeploying ShamirSOSVault Contract...");
+  const ShamirSOSVault = await hre.ethers.getContractFactory("ShamirSOSVault");
+  const shamirSOSVault = await ShamirSOSVault.deploy(deployOverrides);
+  await shamirSOSVault.waitForDeployment();
+  const shamirSOSVaultAddress = await shamirSOSVault.getAddress();
+  console.log("✅ ShamirSOSVault deployed to:", shamirSOSVaultAddress);
+
   // Save contract addresses and ABIs
   const contractAddresses = {
     UserIdentity: userIdentityAddress,
@@ -63,6 +87,9 @@ async function main() {
     Reputation: reputationAddress,
     DPoSGovernance: dposGovernanceAddress,
     DisputeResolution: disputeResolutionAddress,
+    ZKPDriverVerifier: zkpDriverVerifierAddress,
+    MerkleAuditTrail: merkleAuditTrailAddress,
+    ShamirSOSVault: shamirSOSVaultAddress,
     network: hre.network.name,
     deployedAt: new Date().toISOString()
   };
@@ -121,6 +148,52 @@ async function main() {
     JSON.stringify(disputeResolutionArtifact.abi, null, 2)
   );
 
+  // Copy ZKPDriverVerifier ABI
+  const zkpDriverVerifierArtifact = require(path.join(artifactsDir, "ZKPDriverVerifier.sol/ZKPDriverVerifier.json"));
+  fs.writeFileSync(
+    path.join(abisDir, "ZKPDriverVerifier.json"),
+    JSON.stringify(zkpDriverVerifierArtifact.abi, null, 2)
+  );
+
+  // Copy MerkleAuditTrail ABI
+  const merkleAuditTrailArtifact = require(path.join(artifactsDir, "MerkleAuditTrail.sol/MerkleAuditTrail.json"));
+  fs.writeFileSync(
+    path.join(abisDir, "MerkleAuditTrail.json"),
+    JSON.stringify(merkleAuditTrailArtifact.abi, null, 2)
+  );
+
+  // Copy ShamirSOSVault ABI
+  const shamirSOSVaultArtifact = require(path.join(artifactsDir, "ShamirSOSVault.sol/ShamirSOSVault.json"));
+  fs.writeFileSync(
+    path.join(abisDir, "ShamirSOSVault.json"),
+    JSON.stringify(shamirSOSVaultArtifact.abi, null, 2)
+  );
+
+  // Copy addresses to client
+  const clientContractsDir = path.join(__dirname, "../../client/src/contracts");
+  if (fs.existsSync(clientContractsDir)) {
+    fs.writeFileSync(
+      path.join(clientContractsDir, "contract-addresses.json"),
+      JSON.stringify(contractAddresses, null, 2)
+    );
+    // Copy ZKPDriverVerifier ABI to client
+    fs.writeFileSync(
+      path.join(clientContractsDir, "ZKPDriverVerifier.json"),
+      JSON.stringify(zkpDriverVerifierArtifact.abi, null, 2)
+    );
+    // Copy MerkleAuditTrail ABI to client
+    fs.writeFileSync(
+      path.join(clientContractsDir, "MerkleAuditTrail.json"),
+      JSON.stringify(merkleAuditTrailArtifact.abi, null, 2)
+    );
+    // Copy ShamirSOSVault ABI to client
+    fs.writeFileSync(
+      path.join(clientContractsDir, "ShamirSOSVault.json"),
+      JSON.stringify(shamirSOSVaultArtifact.abi, null, 2)
+    );
+    console.log("✅ Contract addresses and ABIs copied to client/src/contracts/");
+  }
+
   console.log("\n✅ Contract addresses and ABIs saved to deployments/");
   console.log("\n📋 Deployment Summary:");
   console.log("========================");
@@ -129,6 +202,9 @@ async function main() {
   console.log("Reputation:", reputationAddress);
   console.log("DPoSGovernance:", dposGovernanceAddress);
   console.log("DisputeResolution:", disputeResolutionAddress);
+  console.log("ZKPDriverVerifier:", zkpDriverVerifierAddress);
+  console.log("MerkleAuditTrail:", merkleAuditTrailAddress);
+  console.log("ShamirSOSVault:", shamirSOSVaultAddress);
   console.log("========================\n");
 
   // Update .env file with contract addresses
@@ -150,6 +226,13 @@ async function main() {
     } else {
       envContent += `\nDISPUTE_RESOLUTION_CONTRACT_ADDRESS=${disputeResolutionAddress}`;
     }
+
+    if (/ZKP_DRIVER_VERIFIER_CONTRACT_ADDRESS=.*/.test(envContent)) {
+      envContent = envContent.replace(/ZKP_DRIVER_VERIFIER_CONTRACT_ADDRESS=.*/, `ZKP_DRIVER_VERIFIER_CONTRACT_ADDRESS=${zkpDriverVerifierAddress}`);
+    } else {
+      envContent += `\nZKP_DRIVER_VERIFIER_CONTRACT_ADDRESS=${zkpDriverVerifierAddress}`;
+    }
+
     fs.writeFileSync(envPath, envContent);
     console.log("✅ Updated .env file with contract addresses\n");
   }

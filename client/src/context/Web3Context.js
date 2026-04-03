@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../utils/api';
+import { connectWallet } from '../utils/web3';
 import toast from 'react-hot-toast';
 
 const Web3Context = createContext();
@@ -22,6 +23,14 @@ export const Web3Provider = ({ children }) => {
   useEffect(() => {
     checkConnection();
     setupEventListeners();
+    
+    // Cleanup event listeners on unmount
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        window.ethereum.removeListener('chainChanged', handleChainChanged);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -41,19 +50,15 @@ export const Web3Provider = ({ children }) => {
   };
 
   const setupEventListeners = () => {
-    // Wallet event listeners are disabled since we're not using wallet authentication
-    // Users can still use the app without MetaMask
     if (window.ethereum) {
-      // Optional: Add listeners back when wallet features are re-enabled
-      // window.ethereum.on('accountsChanged', handleAccountsChanged);
-      // window.ethereum.on('chainChanged', handleChainChanged);
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      window.ethereum.on('chainChanged', handleChainChanged);
     }
   };
 
   const handleAccountsChanged = (accounts) => {
-    // Disabled - not using wallet authentication
     if (accounts.length === 0) {
-      // disconnect();
+      disconnect();
     } else if (accounts[0] !== account) {
       setAccount(accounts[0]);
     }
@@ -64,14 +69,37 @@ export const Web3Provider = ({ children }) => {
     // window.location.reload();
   };
 
+  const requestWalletAddress = async () => {
+    try {
+      const address = await connectWallet();
+      if (!address) {
+        throw new Error('Failed to get wallet address');
+      }
+      setAccount(address);
+      return address;
+    } catch (err) {
+      console.error('Wallet connection error:', err);
+      throw err;
+    }
+  };
+
   const connect = async (username, email, password, additionalData = {}) => {
     setIsConnecting(true);
     try {
-      // Register with backend (signup) - no wallet required
+      let walletAddress = null;
+      try {
+        walletAddress = await requestWalletAddress();
+      } catch (err) {
+        toast.error(err?.message || 'MetaMask connection rejected or failed.');
+        throw new Error('MetaMask connection failed');
+      }
+
+      // Register with backend (signup)
       const response = await authAPI.signup({
         username,
         email,
         password,
+        walletAddress,
         ...additionalData
       });
 
@@ -95,10 +123,19 @@ export const Web3Provider = ({ children }) => {
   const login = async (email, password) => {
     setIsConnecting(true);
     try {
-      // Login with backend - no wallet required
+      let walletAddress = null;
+      try {
+        walletAddress = await requestWalletAddress();
+      } catch (err) {
+        toast.error('MetaMask connection rejected or failed.');
+        throw new Error('MetaMask connection failed');
+      }
+
+      // Login with backend
       const response = await authAPI.login({
         email,
-        password
+        password,
+        walletAddress
       });
 
       const { user: userData } = response.data;

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+
+
 contract UserIdentity {
     struct User {
         address walletAddress;
@@ -15,10 +17,15 @@ contract UserIdentity {
     mapping(string => address) public usernameToAddress;
     address[] public userAddresses;
 
+    address public admin;
+
     event UserRegistered(address indexed walletAddress, string username, uint256 timestamp);
     event UserUpdated(address indexed walletAddress, string username);
     event UserDeactivated(address indexed walletAddress);
     event UserReactivated(address indexed walletAddress);
+    event SoulboundTokenMinted(address indexed userAddress, uint256 timestamp);
+
+    mapping(address => bool) public hasStudentSBT;
 
     modifier userExists() {
         require(users[msg.sender].walletAddress != address(0), "User does not exist");
@@ -28,6 +35,10 @@ contract UserIdentity {
     modifier userNotExists() {
         require(users[msg.sender].walletAddress == address(0), "User already exists");
         _;
+    }
+
+    constructor() {
+        admin = msg.sender;
     }
 
     function registerUser(
@@ -104,5 +115,12 @@ contract UserIdentity {
 
     function getTotalUsers() public view returns (uint256) {
         return userAddresses.length;
+    }
+
+    function mintStudentSBT(address _userAddress) public {
+        require(msg.sender == admin, "Only admin can mint SBT");
+        require(!hasStudentSBT[_userAddress], "User already has SBT");
+        hasStudentSBT[_userAddress] = true;
+        emit SoulboundTokenMinted(_userAddress, block.timestamp);
     }
 }

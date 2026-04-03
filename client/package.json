@@ -3,16 +3,21 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.20.0",
-    "react-scripts": "5.0.1",
-    "web3": "^4.3.0",
-    "ethers": "^6.9.0",
     "axios": "^1.6.2",
     "date-fns": "^2.30.0",
+    "ethers": "^6.9.0",
+    "keccak256": "^1.0.6",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.294.0",
+    "merkletreejs": "^0.6.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
-    "lucide-react": "^0.294.0"
+    "react-leaflet": "^4.2.1",
+    "react-router-dom": "^6.20.0",
+    "react-scripts": "5.0.1",
+    "secrets.js-grempe": "^2.0.0",
+    "web3": "^4.3.0"
   },
   "scripts": {
     "start": "react-scripts start",

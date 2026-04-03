@@ -6,8 +6,8 @@ async function seed() {
     console.log('Starting database seeding...\n');
 
     // Clear existing data (optional - comment out if you want to keep existing data)
-    // await sequelize.sync({ force: true });
-    // console.log('✅ Database cleared.\n');
+    await sequelize.sync({ force: true });
+    console.log('✅ Database cleared.\n');
 
     // Create test users
     console.log('Creating test users...');
@@ -15,8 +15,9 @@ async function seed() {
       {
         walletAddress: '0x1234567890123456789012345678901234567890',
         username: 'alice_driver',
-        email: 'alice@example.com',
+        email: 'alice@iiitkottayam.ac.in',
         emailVerified: true,
+        password: '$2a$10$RT0qGUt2pmS.u2AX.p1LGuCC0/AUTxvrRDxq/mOqsvhxYR3jLYjiy', // password123
         phoneNumber: '+1234567890',
         bio: 'Experienced driver, love carpooling!',
         role: 'user',
@@ -26,8 +27,9 @@ async function seed() {
       {
         walletAddress: '0x2234567890123456789012345678901234567890',
         username: 'bob_rider',
-        email: 'bob@example.com',
+        email: 'bob@iiitkottayam.ac.in',
         emailVerified: true,
+        password: '$2a$10$RT0qGUt2pmS.u2AX.p1LGuCC0/AUTxvrRDxq/mOqsvhxYR3jLYjiy', // password123
         phoneNumber: '+1234567891',
         bio: 'Regular commuter',
         role: 'user',
@@ -36,9 +38,10 @@ async function seed() {
       },
       {
         walletAddress: '0x3234567890123456789012345678901234567890',
-        username: 'charlie_admin',
-        email: 'charlie@example.com',
+        username: 'admin',
+        email: 'admin@iiitkottayam.ac.in',
         emailVerified: true,
+        password: '$2a$10$RT0qGUt2pmS.u2AX.p1LGuCC0/AUTxvrRDxq/mOqsvhxYR3jLYjiy', // password123
         phoneNumber: '+1234567892',
         bio: 'Platform administrator',
         role: 'admin',
@@ -48,8 +51,9 @@ async function seed() {
       {
         walletAddress: '0x4234567890123456789012345678901234567890',
         username: 'diana_driver',
-        email: 'diana@example.com',
+        email: 'diana@iiitkottayam.ac.in',
         emailVerified: true,
+        password: '$2a$10$RT0qGUt2pmS.u2AX.p1LGuCC0/AUTxvrRDxq/mOqsvhxYR3jLYjiy', // password123
         phoneNumber: '+1234567893',
         bio: 'Weekend driver',
         role: 'user',
@@ -59,8 +63,9 @@ async function seed() {
       {
         walletAddress: '0x5234567890123456789012345678901234567890',
         username: 'eve_rider',
-        email: 'eve@example.com',
+        email: 'eve@iiitkottayam.ac.in',
         emailVerified: true,
+        password: '$2a$10$RT0qGUt2pmS.u2AX.p1LGuCC0/AUTxvrRDxq/mOqsvhxYR3jLYjiy', // password123
         phoneNumber: '+1234567894',
         bio: 'College student',
         role: 'user',
@@ -83,7 +88,7 @@ async function seed() {
     const rides = await Ride.bulkCreate([
       {
         blockchainRideId: 0,
-        driverId: users[0].id, // Alice
+        hostId: users[0].id, // Alice
         startLocation: 'Downtown, New York',
         endLocation: 'Airport, New York',
         startLatitude: 40.7128,
@@ -101,7 +106,7 @@ async function seed() {
       },
       {
         blockchainRideId: 1,
-        driverId: users[3].id, // Diana
+        hostId: users[3].id, // Diana
         startLocation: 'Brooklyn, New York',
         endLocation: 'Manhattan, New York',
         startLatitude: 40.6782,
@@ -119,7 +124,7 @@ async function seed() {
       },
       {
         blockchainRideId: 2,
-        driverId: users[0].id, // Alice
+        hostId: users[0].id, // Alice
         startLocation: 'Queens, New York',
         endLocation: 'Long Island, New York',
         startLatitude: 40.7282,
@@ -137,7 +142,7 @@ async function seed() {
       },
       {
         blockchainRideId: 3,
-        driverId: users[3].id, // Diana
+        hostId: users[3].id, // Diana
         startLocation: 'Manhattan, New York',
         endLocation: 'Columbia University, New York',
         startLatitude: 40.7580,

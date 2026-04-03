@@ -41,7 +41,8 @@ export const authAPI = {
   signup: (data) => api.post('/auth/signup', data),
   login: (data) => api.post('/auth/login', data),
   getCurrentUser: () => api.get('/auth/me'),
-  updateProfile: (data) => api.put('/auth/profile', data)
+  updateProfile: (data) => api.put('/auth/profile', data),
+  mintSBT: (data) => api.post('/auth/mint-sbt', data)
 };
 
 // Ride APIs
@@ -67,7 +68,8 @@ export const rideAPI = {
   rejectJoinRequest: (rideId, participantId) => api.post(`/rides/${rideId}/participants/${participantId}/reject`),
   leaveRide: (id) => api.post(`/rides/${id}/leave`),
   cancelRide: (id) => api.post(`/rides/${id}/cancel`),
-  completeRide: (id) => api.post(`/rides/${id}/complete`)
+  completeRide: (id) => api.post(`/rides/${id}/complete`),
+  verifyZKProof: (id, zkProof, publicSignal) => api.post(`/rides/${id}/verify-zk-proof`, { zkProof, publicSignal })
 };
 
 // Rating APIs
@@ -90,7 +92,30 @@ export const adminAPI = {
   getAllUsers: (params) => api.get('/admin/users', { params }),
   getAllRides: (params) => api.get('/admin/rides', { params }),
   toggleUserBan: (userId, data) => api.put(`/admin/users/${userId}/ban`, data),
-  getDashboardStats: () => api.get('/admin/stats')
+  getDashboardStats: () => api.get('/admin/stats'),
+  // Merkle Audit Trail
+  anchorMerkleRoot: () => api.post('/admin/merkle/anchor'),
+  getMerkleProof: (rideId) => api.get(`/admin/merkle/proof/${rideId}`),
+  verifyMerkleProof: (data) => api.post('/admin/merkle/verify', data),
+  // CP-ABE Demo
+  cpabeEncrypt: (data) => api.post('/admin/cpabe/encrypt', data),
+  cpabeDecrypt: (data) => api.post('/admin/cpabe/decrypt', data),
+  cpabeKeygen: (data) => api.post('/admin/cpabe/keygen', data),
+  getRidesWithEncryption: () => api.get('/admin/cpabe/rides')
+};
+
+// SOS APIs with Shamir's Secret Sharing
+export const sosAPI = {
+  // Traditional SOS
+  triggerSOS: (data) => api.post('/sos', data),
+  getAlerts: (params) => api.get('/sos', { params }),
+  resolveAlert: (id, data) => api.put(`/sos/${id}`, data),
+  // Shamir's Secret Sharing
+  configureSSS: (data) => api.post('/sos/sss/configure', data),
+  getSSSConfig: () => api.get('/sos/sss/config'),
+  triggerSSSAlert: (data) => api.post('/sos/sss/trigger', data),
+  provideShare: (data) => api.post('/sos/sss/provide-share', data),
+  demoSSS: (data) => api.post('/sos/sss/demo', data)
 };
 
 export default api;

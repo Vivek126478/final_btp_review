@@ -12,10 +12,10 @@ const Ride = sequelize.define('Ride', {
     allowNull: true,
     field: 'blockchain_ride_id'
   },
-  driverId: {
+  hostId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    field: 'driver_id',
+    field: 'host_id',
     references: {
       model: 'users',
       key: 'id'
@@ -75,12 +75,42 @@ const Ride = sequelize.define('Ride', {
     type: DataTypes.JSON,
     field: 'vehicle_info'
   },
+  driverDetails: {
+    type: DataTypes.JSON,
+    field: 'driver_details'
+  },
   status: {
     type: DataTypes.ENUM('draft', 'active', 'completed', 'cancelled'),
     defaultValue: 'active'
   },
   notes: {
     type: DataTypes.TEXT
+  },
+  agreementHash: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'agreement_hash'
+  },
+  agreementData: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'agreement_data',
+    comment: 'Raw string used to compute agreementHash for verification'
+  },
+  zkVerified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'zk_verified'
+  },
+  merkleAnchored: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'merkle_anchored'
+  },
+  merkleBatchId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'merkle_batch_id'
   }
 }, {
   tableName: 'rides',

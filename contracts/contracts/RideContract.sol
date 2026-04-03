@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+
 contract RideContract {
     enum RideStatus { ACTIVE, COMPLETED, CANCELLED }
 
@@ -21,6 +24,7 @@ contract RideContract {
         address rider;
         uint256 joinedAt;
         bool hasLeft;
+        bool hasBoarded;
     }
 
     uint256 private rideCounter;
@@ -29,7 +33,9 @@ contract RideContract {
     mapping(address => uint256[]) public driverRides;
     mapping(address => uint256[]) public riderRides;
 
+
     mapping(uint256 => uint256) public rideStartedAt;
+    mapping(uint256 => bytes32) public anchoredHashes;
 
     event RideCreated(
         uint256 indexed rideId,
@@ -41,9 +47,11 @@ contract RideContract {
     );
     event RideStarted(uint256 indexed rideId, uint256 timestamp);
     event RideJoined(uint256 indexed rideId, address indexed rider, uint256 timestamp);
+    event RiderBoarded(uint256 indexed rideId, address indexed rider, uint256 timestamp);
     event RideLeft(uint256 indexed rideId, address indexed rider, uint256 timestamp);
     event RideCompleted(uint256 indexed rideId, uint256 timestamp);
     event RideCancelled(uint256 indexed rideId, address indexed cancelledBy, uint256 timestamp);
+    event RideAgreementAnchored(uint256 indexed rideId, bytes32 agreementHash);
 
     modifier rideExists(uint256 _rideId) {
         require(_rideId < rideCounter, "Ride does not exist");
@@ -102,7 +110,8 @@ contract RideContract {
         rideParticipants[_rideId].push(RideParticipant({
             rider: msg.sender,
             joinedAt: block.timestamp,
-            hasLeft: false
+            hasLeft: false,
+            hasBoarded: false
         }));
 
         riderRides[msg.sender].push(_rideId);
@@ -216,5 +225,13 @@ contract RideContract {
 
     function getTotalRides() public view returns (uint256) {
         return rideCounter;
+    }
+
+    // --- Web3 Ride Agreement Integrity ---
+    // The Host anchors the initial ride agreement hash to prevent bait-and switch.
+    function anchorRideAgreement(uint256 _rideId, bytes32 _agreementHash) public rideExists(_rideId) onlyDriver(_rideId) {
+        require(anchoredHashes[_rideId] == 0, "Agreement hash already anchored");
+        anchoredHashes[_rideId] = _agreementHash;
+        emit RideAgreementAnchored(_rideId, _agreementHash);
     }
 }

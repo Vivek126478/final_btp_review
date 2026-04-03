@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useWeb3 } from '../context/Web3Context';
-import { Car, User, LogOut, Shield } from 'lucide-react';
+import { Car, User, LogOut, Shield, Fingerprint } from 'lucide-react';
 import { formatAddress } from '../utils/web3';
 
 const Navbar = () => {
@@ -44,7 +44,14 @@ const Navbar = () => {
               >
                 My Rides
               </Link>
-              {user?.role === 'admin' && (
+              <Link
+                to="/governance"
+                className="text-gray-700 hover:text-primary-600 transition"
+              >
+                Governance
+              </Link>
+
+                {user?.role === 'admin' && (
                 <Link
                   to="/admin"
                   className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 transition"

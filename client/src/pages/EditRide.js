@@ -5,9 +5,8 @@ import toast from 'react-hot-toast';
 import { rideAPI } from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useWeb3 } from '../context/Web3Context';
-import PlacesAutocompleteInput from '../components/PlacesAutocompleteInput';
-import MapPreview from '../components/MapPreview';
-import { loadGoogleMaps } from '../utils/googleMaps';
+import LocationAutocomplete from '../components/LocationAutocomplete';
+import OpenStreetMapPreview from '../components/OpenStreetMapPreview';
 
 const RIDE_TAGS = [
   'Office Commute',
@@ -60,7 +59,7 @@ const EditRide = () => {
       const r = response.data.ride;
       setRide(r);
 
-      if (r.driverId !== user?.id) {
+      if (r.hostId !== user?.id) {
         toast.error('You are not allowed to edit this ride');
         navigate('/my-rides');
         return;
@@ -116,18 +115,15 @@ const EditRide = () => {
       let addressText = 'Current location';
 
       try {
-        const google = await loadGoogleMaps();
-        const geocoder = new google.maps.Geocoder();
-
-        const results = await new Promise((resolve, reject) => {
-          geocoder.geocode({ location: { lat, lng } }, (res, status) => {
-            if (status === 'OK') return resolve(res);
-            reject(new Error(status));
-          });
-        });
-
-        if (Array.isArray(results) && results[0]?.formatted_address) {
-          addressText = results[0].formatted_address;
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+          { headers: { 'User-Agent': 'D-Carpool-App' } }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.display_name) {
+            addressText = data.display_name;
+          }
         }
       } catch (e) {
         // Reverse geocoding is optional
@@ -217,19 +213,20 @@ const EditRide = () => {
         <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <PlacesAutocompleteInput
+              <LocationAutocomplete
                 label="Start Location"
                 value={formData.startLocation}
                 onChange={(v) => setFormData({ ...formData, startLocation: v })}
-                onPlaceSelected={({ lat, lng }) =>
+                onPlaceSelected={({ address, lat, lng }) =>
                   setFormData({
                     ...formData,
+                    startLocation: address,
                     startLatitude: lat,
                     startLongitude: lng
                   })
                 }
                 required
-                placeholder="Search a location"
+                placeholder="Search pickup location..."
               />
               <button
                 type="button"
@@ -242,19 +239,20 @@ const EditRide = () => {
             </div>
 
             <div>
-              <PlacesAutocompleteInput
+              <LocationAutocomplete
                 label="End Location"
                 value={formData.endLocation}
                 onChange={(v) => setFormData({ ...formData, endLocation: v })}
-                onPlaceSelected={({ lat, lng }) =>
+                onPlaceSelected={({ address, lat, lng }) =>
                   setFormData({
                     ...formData,
+                    endLocation: address,
                     endLatitude: lat,
                     endLongitude: lng
                   })
                 }
                 required
-                placeholder="Search a location"
+                placeholder="Search drop-off location..."
               />
             </div>
 
@@ -308,15 +306,15 @@ const EditRide = () => {
             </div>
           </div>
 
-          <MapPreview
+          <OpenStreetMapPreview
             start={
               formData.startLatitude && formData.startLongitude
-                ? { lat: Number(formData.startLatitude), lng: Number(formData.startLongitude) }
+                ? { lat: Number(formData.startLatitude), lng: Number(formData.startLongitude), address: formData.startLocation }
                 : null
             }
             end={
               formData.endLatitude && formData.endLongitude
-                ? { lat: Number(formData.endLatitude), lng: Number(formData.endLongitude) }
+                ? { lat: Number(formData.endLatitude), lng: Number(formData.endLongitude), address: formData.endLocation }
                 : null
             }
           />
