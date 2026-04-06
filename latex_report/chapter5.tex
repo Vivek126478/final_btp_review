@@ -1,0 +1,432 @@
+\chapter{Blockchain Security Implementation}
+
+This chapter details the seven blockchain security mechanisms implemented in D-CARPOOL, providing cryptographic protection at multiple layers.
+
+\section{Soulbound Tokens (SBT) - Academic Identity}
+
+\subsection{Overview}
+
+Soulbound Tokens are non-transferable NFTs that represent a user's verified academic identity. Once minted, they cannot be sold, traded, or transferred to another wallet.
+
+\begin{definition}
+A \textbf{Soulbound Token (SBT)} in D-CARPOOL is a non-transferable ERC-721-like token permanently bound to a student's wallet address, representing verified enrollment at IIIT Kottayam.
+\end{definition}
+
+\subsection{Implementation}
+
+\begin{lstlisting}[language=Java, caption=SBT Minting Function]
+function mintSBT(
+    address to,
+    string memory email,
+    string memory ipfsMetadata
+) external onlyVerifiedEmail(email) {
+    require(!hasSBT[to], "SBT already exists");
+    require(_isValidEmail(email), "Invalid institutional email");
+    
+    uint256 tokenId = _tokenIdCounter++;
+    _safeMint(to, tokenId);
+    
+    sbtData[tokenId] = SBTMetadata({
+        email: email,
+        ipfsHash: ipfsMetadata,
+        mintedAt: block.timestamp,
+        isActive: true
+    });
+    
+    hasSBT[to] = true;
+    emit SBTMinted(to, tokenId, email);
+}
+
+// Override to prevent transfers
+function _beforeTokenTransfer(
+    address from,
+    address to,
+    uint256 tokenId
+) internal override {
+    require(from == address(0), "SBT: Non-transferable");
+    super._beforeTokenTransfer(from, to, tokenId);
+}
+\end{lstlisting}
+
+\subsection{Advantages}
+
+\begin{table}[H]
+\centering
+\caption{SBT Advantages}
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\textbf{Advantage} & \textbf{Description} \\
+\hline
+Sybil Resistance & One person = one SBT, prevents fake accounts \\
+Permanent Record & Academic verification stored forever on-chain \\
+Privacy Preserving & Only stores verification status, not personal data \\
+Decentralized Trust & No central authority needed for verification \\
+Gas Efficient & Minimal on-chain storage, details on IPFS \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Zero-Knowledge Proofs (ZKP) - Driver Verification}
+
+\subsection{Overview}
+
+Zero-Knowledge Proofs allow drivers to prove they have valid credentials without revealing the actual documents.
+
+\begin{theorem}[ZKP Soundness]
+In our ZKP system, if a prover does not possess a valid driver's license, the probability of generating an accepting proof is negligible:
+\begin{equation}
+\Pr[\text{Verify}(\pi, \text{stmt}) = 1 \mid \text{invalid license}] \leq \text{negl}(\lambda)
+\end{equation}
+\end{theorem}
+
+\subsection{Implementation Flow}
+
+\begin{enumerate}
+    \item Driver inputs private credentials (license number, expiry date)
+    \item ZK circuit computes proof of validity
+    \item Proof submitted to ZKPDriverVerifier contract
+    \item Contract verifies proof without seeing credentials
+    \item Driver marked as verified on-chain
+\end{enumerate}
+
+\begin{lstlisting}[language=Java, caption=ZKP Verification Contract]
+struct DriverProof {
+    uint256[2] a;      // Proof component A
+    uint256[2][2] b;   // Proof component B
+    uint256[2] c;      // Proof component C
+    uint256[] publicSignals;
+}
+
+function verifyDriverProof(
+    DriverProof calldata proof,
+    address driver
+) external returns (bool) {
+    require(hasSBT(driver), "Must have SBT");
+    
+    bool isValid = verifier.verifyProof(
+        proof.a,
+        proof.b,
+        proof.c,
+        proof.publicSignals
+    );
+    
+    if (isValid) {
+        verifiedDrivers[driver] = VerificationStatus({
+            isVerified: true,
+            verifiedAt: block.timestamp,
+            expiresAt: block.timestamp + 365 days
+        });
+        emit DriverVerified(driver);
+    }
+    
+    return isValid;
+}
+\end{lstlisting}
+
+\section{On-Chain Hash Integrity - Ride Agreements}
+
+\subsection{Overview}
+
+Every ride agreement is hashed and stored on the blockchain, creating an immutable record for tamper detection.
+
+\subsection{Hash Computation}
+
+\begin{equation}
+h = \text{keccak256}(\text{abi.encodePacked}(
+    \text{source}, \text{dest}, \text{dateTime}, \text{price}, \text{seats}, \text{host}
+))
+\end{equation}
+
+\subsection{Verification Process}
+
+\begin{enumerate}
+    \item Store ride details in MySQL database
+    \item Compute hash of ride details
+    \item Store hash on RideContract
+    \item Later verification:
+    \begin{equation}
+    \text{isValid} = (h_{\text{computed}} == h_{\text{stored}})
+    \end{equation}
+\end{enumerate}
+
+\section{DPoS Governance - Dispute Resolution}
+
+\subsection{Overview}
+
+Delegated Proof of Stake enables community-elected delegates to vote on dispute resolutions, providing decentralized justice.
+
+\subsection{Delegate Election}
+
+\begin{lstlisting}[language=Java, caption=DPoS Delegate Registration]
+function registerAsDelegate() external payable {
+    require(msg.value >= MIN_STAKE, "Insufficient stake");
+    require(hasSBT(msg.sender), "Must have SBT");
+    require(!isDelegate[msg.sender], "Already delegate");
+    
+    delegates.push(Delegate({
+        addr: msg.sender,
+        stake: msg.value,
+        votes: 0,
+        reputation: 100,
+        isActive: true
+    }));
+    
+    isDelegate[msg.sender] = true;
+    emit DelegateRegistered(msg.sender, msg.value);
+}
+
+function voteForDelegate(address delegate) external {
+    require(hasSBT(msg.sender), "Must have SBT");
+    require(isDelegate[delegate], "Not a delegate");
+    require(!hasVoted[msg.sender], "Already voted");
+    
+    delegateVotes[delegate]++;
+    hasVoted[msg.sender] = true;
+    emit VoteCast(msg.sender, delegate);
+}
+\end{lstlisting}
+
+\subsection{Dispute Voting}
+
+\begin{enumerate}
+    \item User raises dispute with evidence
+    \item DisputeResolution contract creates dispute
+    \item Top 5 delegates notified
+    \item 24-hour voting window opens
+    \item Delegates cast verdicts:
+    \begin{itemize}
+        \item \texttt{FAVOR\_COMPLAINANT}: Support complainant
+        \item \texttt{FAVOR\_ACCUSED}: Support accused
+        \item \texttt{ABSTAIN}: No opinion
+    \end{itemize}
+    \item Quorum check (3/5 required)
+    \item Resolution enforced
+\end{enumerate}
+
+\section{Merkle Tree Audit Trail - Ride History}
+
+\subsection{Overview}
+
+Merkle Trees enable efficient verification of ride history with $O(\log n)$ proof size.
+
+\begin{theorem}
+For a Merkle tree with $n$ leaves, verifying membership requires only $\log_2(n)$ hash computations and comparisons.
+\end{theorem}
+
+\begin{proof}
+The verification path from leaf to root traverses $\log_2(n)$ levels. At each level, one sibling hash is provided and one hash is computed. Total: $\log_2(n)$ operations.
+\end{proof}
+
+\subsection{Tree Construction}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.8\textwidth}{
+\centering
+\vspace{0.3cm}
+\textbf{Merkle Tree Structure}\\[0.3cm]
+\begin{verbatim}
+         Root Hash (on-chain)
+              /    \
+         Hash(AB)   Hash(CD)
+           / \       / \
+      Hash(A) Hash(B) Hash(C) Hash(D)
+         |      |       |       |
+      Ride1  Ride2   Ride3   Ride4
+\end{verbatim}
+\vspace{0.3cm}
+}}
+\caption{Merkle Tree for Ride Verification}
+\end{figure}
+
+\subsection{Proof Verification}
+
+To verify Ride2 exists:
+\begin{enumerate}
+    \item Proof = [Hash(A), Hash(CD)]
+    \item Compute Hash(B) from ride data
+    \item Compute Hash(AB) = Hash(Hash(A) || Hash(B))
+    \item Compute Root = Hash(Hash(AB) || Hash(CD))
+    \item Compare with stored root
+\end{enumerate}
+
+\section{CP-ABE Encryption - Attribute-Based Access}
+
+\subsection{Overview}
+
+Ciphertext-Policy Attribute-Based Encryption encrypts data with an access policy. Only users with matching attributes can decrypt.
+
+\begin{definition}
+In \textbf{CP-ABE}, ciphertext $C$ is encrypted under a policy $\mathcal{P}$:
+\begin{equation}
+C = \text{Encrypt}(PK, M, \mathcal{P})
+\end{equation}
+Decryption succeeds iff user attributes $\mathcal{A}$ satisfy $\mathcal{P}$:
+\begin{equation}
+M = \text{Decrypt}(SK_{\mathcal{A}}, C) \iff \mathcal{A} \models \mathcal{P}
+\end{equation}
+\end{definition}
+
+\subsection{D-CARPOOL Policy Example}
+
+\begin{lstlisting}[language=Python, caption=CP-ABE Policy for Vehicle Info]
+# Policy: Host OR approved passengers can decrypt
+policy = "(ride_123_host) OR (ride_123_accepted)"
+
+# Host attributes
+host_attrs = ["ride_123_host", "user_verified"]
+
+# Passenger attributes (after approval)
+passenger_attrs = ["ride_123_accepted", "user_verified"]
+
+# Encrypt vehicle details
+vehicle_info = {
+    "make": "Honda",
+    "model": "City",
+    "plate": "KL-XX-1234"
+}
+
+ciphertext = cpabe.encrypt(
+    master_public_key,
+    json.dumps(vehicle_info),
+    policy
+)
+
+# Only users with matching attributes can decrypt
+decrypted = cpabe.decrypt(
+    user_secret_key,  # must have ride_123_host or ride_123_accepted
+    ciphertext
+)
+\end{lstlisting}
+
+\section{Shamir's Secret Sharing - SOS Emergency Data}
+
+\subsection{Overview}
+
+Shamir's Secret Sharing splits emergency data into $n$ shares where $k$ shares are needed to reconstruct. With $k-1$ or fewer shares, \textbf{zero information} is revealed.
+
+\begin{theorem}[Information-Theoretic Security]
+In a $(k,n)$ Shamir scheme, for any set $S$ of $k-1$ shares:
+\begin{equation}
+H(S \mid \text{Shares}) = H(S)
+\end{equation}
+The conditional entropy equals unconditional entropy — shares reveal nothing.
+\end{theorem}
+
+\subsection{Mathematical Foundation}
+
+Secret $S$ is encoded as polynomial constant:
+\begin{equation}
+f(x) = S + a_1x + a_2x^2 + \cdots + a_{k-1}x^{k-1} \mod p
+\end{equation}
+
+Shares are points on the polynomial: $(x_i, f(x_i))$
+
+Reconstruction uses Lagrange interpolation:
+\begin{equation}
+S = f(0) = \sum_{i=1}^{k} y_i \prod_{j=1, j \neq i}^{k} \frac{-x_j}{x_i - x_j} \mod p
+\end{equation}
+
+\subsection{D-CARPOOL Implementation}
+
+\begin{lstlisting}[language=Java, caption=Shamir SSS Implementation]
+const secrets = require('secrets.js-grempe');
+
+function splitSecret(secretData, totalShares, threshold) {
+    // Convert to hex
+    const hexSecret = secrets.str2hex(JSON.stringify(secretData));
+    
+    // Split using Shamir's algorithm
+    const shares = secrets.share(hexSecret, totalShares, threshold);
+    
+    return shares.map((share, index) => ({
+        index: index + 1,
+        share: share,
+        hash: keccak256(share)  // For on-chain commitment
+    }));
+}
+
+function combineShares(shares, threshold) {
+    if (shares.length < threshold) {
+        throw new Error(`Need at least ${threshold} shares`);
+    }
+    
+    const shareValues = shares.map(s => s.share);
+    const hexSecret = secrets.combine(shareValues);
+    
+    return JSON.parse(secrets.hex2str(hexSecret));
+}
+
+// D-CARPOOL SOS Configuration
+// 5 shares, threshold 3
+const sosData = {
+    emergencyContact1: "Mom: +91-9876543210",
+    emergencyContact2: "Dad: +91-9876543211",
+    bloodGroup: "O+",
+    allergies: ["Penicillin"],
+    homeAddress: "123 Main St, Kottayam, Kerala"
+};
+
+const shares = splitSecret(sosData, 5, 3);
+
+// Distribution:
+// Share 1 -> Platform admin (auto-available)
+// Share 2 -> User's encrypted backup
+// Share 3 -> Trusted contact 1
+// Share 4 -> Trusted contact 2
+// Share 5 -> IPFS encrypted backup
+\end{lstlisting}
+
+\subsection{On-Chain Commitment}
+
+\begin{lstlisting}[language=Java, caption=ShamirSOSVault Contract]
+function configureSOS(
+    bytes32[] calldata shareHashes,
+    uint8 threshold
+) external {
+    require(hasSBT(msg.sender), "Must have SBT");
+    require(shareHashes.length >= threshold, "Invalid threshold");
+    
+    sosConfigs[msg.sender] = SOSConfig({
+        user: msg.sender,
+        totalShares: uint8(shareHashes.length),
+        threshold: threshold,
+        shareHashes: shareHashes,
+        isActive: true,
+        configuredAt: block.timestamp
+    });
+    
+    emit SOSConfigured(msg.sender, shareHashes.length, threshold);
+}
+
+function verifyShare(
+    address user,
+    bytes32 shareHash,
+    uint8 shareIndex
+) external view returns (bool) {
+    SOSConfig storage config = sosConfigs[user];
+    require(config.isActive, "No SOS config");
+    require(shareIndex < config.totalShares, "Invalid index");
+    
+    return config.shareHashes[shareIndex] == shareHash;
+}
+\end{lstlisting}
+
+\subsection{Security Guarantee}
+
+\begin{table}[H]
+\centering
+\caption{Shamir SSS Security in D-CARPOOL}
+\begin{tabular}{|c|p{8cm}|}
+\hline
+\textbf{Shares Available} & \textbf{Information Revealed} \\
+\hline
+0 shares & Zero information \\
+1 share & Zero information \\
+2 shares & Zero information \\
+3+ shares & Full reconstruction possible \\
+\hline
+\end{tabular}
+\end{table}
+
+This is \textbf{information-theoretic security}, not computational security — it cannot be broken even with unlimited computing power.

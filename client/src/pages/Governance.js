@@ -16,6 +16,12 @@ const Governance = () => {
   const [governanceContract, setGovernanceContract] = useState(null);
   const [disputeContract, setDisputeContract] = useState(null);
   const [userAddress, setUserAddress] = useState(null);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [candidateName, setCandidateName] = useState('');
+  const [candidateDescription, setCandidateDescription] = useState('');
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [disputeRideId, setDisputeRideId] = useState('');
+  const [disputeEvidence, setDisputeEvidence] = useState('');
 
   useEffect(() => {
     const initContracts = async () => {
@@ -48,21 +54,38 @@ const Governance = () => {
     setLoading(true);
     try {
       const count = await governanceContract.getCandidateCount();
-      if (count > 0) {
-        const candidateAddresses = await governanceContract.getCandidates(0, count);
+      console.log("Candidate count:", count.toString());
+      
+      const countNum = Number(count);
+      if (countNum > 0) {
+        const candidateAddresses = await governanceContract.getCandidates(0, countNum);
+        console.log("Candidate addresses:", candidateAddresses);
+        
         const candidateData = await Promise.all(
           candidateAddresses.map(async (addr) => {
             const data = await governanceContract.candidates(addr);
-            return { address: addr, ...data };
+            console.log("Raw candidate data for", addr, ":", data);
+            // Access struct fields - ethers v6 returns array-like with named properties
+            return { 
+              address: addr, 
+              registered: data[0] || data.registered,
+              stake: data[1] || data.stake,
+              metadataURI: data[2] || data.metadataURI,
+              totalVotes: data[3] || data.totalVotes
+            };
           })
         );
+        console.log("Processed candidates:", candidateData);
         // filter out unregistered
-        setCandidates(candidateData.filter(c => c.registered));
+        const registered = candidateData.filter(c => c.registered === true);
+        console.log("Registered candidates:", registered);
+        setCandidates(registered);
       } else {
+        console.log("No candidates found");
         setCandidates([]);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Fetch candidates error:", err);
       toast.error("Failed to fetch candidates");
     } finally {
       setLoading(false);
@@ -73,16 +96,27 @@ const Governance = () => {
     setLoading(true);
     try {
       const delegateAddrs = await governanceContract.getDelegates();
+      console.log("Delegate addresses:", delegateAddrs);
+      
       const delegateData = await Promise.all(
         delegateAddrs.map(async (addr) => {
           if (addr === '0x0000000000000000000000000000000000000000') return null;
           const data = await governanceContract.candidates(addr);
-          return { address: addr, ...data };
+          console.log("Delegate data for", addr, ":", data);
+          return { 
+            address: addr, 
+            registered: data[0] || data.registered,
+            stake: data[1] || data.stake,
+            metadataURI: data[2] || data.metadataURI,
+            totalVotes: data[3] || data.totalVotes
+          };
         })
       );
-      setDelegates(delegateData.filter(d => d !== null && d.registered));
+      const filtered = delegateData.filter(d => d !== null && d.registered === true);
+      console.log("Filtered delegates:", filtered);
+      setDelegates(filtered);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch delegates error:", err);
       toast.error("Failed to fetch delegates");
     } finally {
       setLoading(false);
@@ -93,19 +127,39 @@ const Governance = () => {
     setLoading(true);
     try {
       const dispCount = await disputeContract.disputeCount();
+      console.log("Dispute count:", dispCount.toString());
+      
       const disputeData = [];
-      for (let i = 0; i < dispCount; i++) {
+      const countNum = Number(dispCount);
+      
+      for (let i = 0; i < countNum; i++) {
         const data = await disputeContract.disputes(i);
+        console.log("Raw dispute data for", i, ":", data);
+        
         let hasVoted = false;
         if (userAddress) {
           hasVoted = await disputeContract.hasVoted(i, userAddress);
         }
-        disputeData.push({ id: i, ...data, userHasVoted: hasVoted });
+        
+        // Parse struct fields properly
+        disputeData.push({ 
+          id: i, 
+          rideId: data[0] || data.rideId,
+          openedBy: data[1] || data.openedBy,
+          evidenceHash: data[2] || data.evidenceHash,
+          openedAt: data[3] || data.openedAt,
+          finalized: data[4] || data.finalized,
+          finalDecision: data[5] || data.finalDecision,
+          approveVotes: data[6] || data.approveVotes,
+          rejectVotes: data[7] || data.rejectVotes,
+          userHasVoted: hasVoted 
+        });
       }
+      console.log("Processed disputes:", disputeData);
       // sort latest first
       setDisputes(disputeData.reverse());
     } catch (err) {
-      console.error(err);
+      console.error("Fetch disputes error:", err);
       toast.error("Failed to fetch disputes");
     } finally {
       setLoading(false);
@@ -114,16 +168,36 @@ const Governance = () => {
 
   const handleRegisterCandidate = async () => {
     if (!governanceContract) return toast.error("Connect wallet first!");
+    if (!candidateName.trim()) return toast.error("Please enter candidate name!");
+    
     try {
+      // Create metadata JSON with candidate info
+      const metadata = JSON.stringify({
+        name: candidateName,
+        description: candidateDescription,
+        registeredAt: new Date().toISOString()
+      });
+      
+      // Encode as base64 for use as metadata URI (or use IPFS in production)
+      const metadataURI = `data:application/json;base64,${btoa(metadata)}`;
+      
       const minStake = await governanceContract.minCandidateStake();
-      const tx = await governanceContract.registerCandidate("IPFS_OR_HTTP_METADATA_URL", { value: minStake, gasLimit: 500000 });
+      console.log("Min stake required:", minStake.toString());
+      
+      const tx = await governanceContract.registerCandidate(metadataURI, { value: minStake, gasLimit: 500000 });
       toast.loading("Registering candidate...", { id: "tx" });
       await tx.wait();
       toast.success("Registered successfully!", { id: "tx" });
+      
+      // Reset form
+      setCandidateName('');
+      setCandidateDescription('');
+      setShowRegisterModal(false);
+      
       fetchCandidates();
     } catch (err) {
-      console.error(err);
-      toast.error(err.reason || "Failed to register", { id: "tx" });
+      console.error("Registration error:", err);
+      toast.error(err.reason || err.message || "Failed to register", { id: "tx" });
     }
   };
 
@@ -138,6 +212,46 @@ const Governance = () => {
     } catch (err) {
       console.error(err);
       toast.error(err.reason || "Failed to vote", { id: "tx" });
+    }
+  };
+
+  const handleCreateDispute = async () => {
+    if (!disputeContract) return toast.error("Connect wallet first!");
+    if (!disputeRideId.trim()) return toast.error("Please enter a Ride ID!");
+    if (!disputeEvidence.trim()) return toast.error("Please enter evidence description!");
+    
+    try {
+      // Create evidence hash from the evidence text
+      const evidenceText = JSON.stringify({
+        rideId: disputeRideId,
+        description: disputeEvidence,
+        timestamp: new Date().toISOString(),
+        reporter: userAddress
+      });
+      
+      // Create a simple hash (in production, use proper hashing)
+      const encoder = new TextEncoder();
+      const data = encoder.encode(evidenceText);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const evidenceHash = '0x' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      console.log("Creating dispute with:", { rideId: disputeRideId, evidenceHash });
+      
+      const tx = await disputeContract.openDispute(parseInt(disputeRideId), evidenceHash, { gasLimit: 500000 });
+      toast.loading("Creating dispute...", { id: "tx" });
+      await tx.wait();
+      toast.success("Dispute created successfully!", { id: "tx" });
+      
+      // Reset form
+      setDisputeRideId('');
+      setDisputeEvidence('');
+      setShowDisputeModal(false);
+      
+      fetchDisputes();
+    } catch (err) {
+      console.error("Dispute creation error:", err);
+      toast.error(err.reason || err.message || "Failed to create dispute", { id: "tx" });
     }
   };
 
@@ -225,12 +339,20 @@ const Governance = () => {
               <div>
                 <div className="mb-6 flex justify-between items-center">
                   <h3 className="text-lg leading-6 font-medium text-gray-900">Governance Candidates</h3>
-                  <button
-                    onClick={handleRegisterCandidate}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-                  >
-                    Register as Candidate
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={fetchCandidates}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      Refresh
+                    </button>
+                    <button
+                      onClick={() => setShowRegisterModal(true)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+                    >
+                      Register as Candidate
+                    </button>
+                  </div>
                 </div>
                 {candidates.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">No candidates registered yet.</p>
@@ -261,9 +383,17 @@ const Governance = () => {
             {/* Delegates Tab */}
             {activeTab === 'delegates' && (
               <div>
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">Top Elected Delegates</h3>
+                <div className="mb-6 flex justify-between items-center">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">Top Elected Delegates</h3>
+                  <button
+                    onClick={fetchDelegates}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Refresh
+                  </button>
+                </div>
                 {delegates.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No delegates elected yet.</p>
+                  <p className="text-gray-500 text-center py-8">No delegates elected yet. Candidates need votes to become delegates!</p>
                 ) : (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {delegates.map((d, idx) => (
@@ -273,7 +403,7 @@ const Governance = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900">{formatAddress(d.address)}</p>
-                          <p className="text-sm font-semibold text-indigo-600 mt-1">Votes: {formatEther(d.totalVotes)}</p>
+                          <p className="text-sm font-semibold text-indigo-600 mt-1">Votes: {formatEther(d.totalVotes)} ETH</p>
                         </div>
                       </div>
                     ))}
@@ -285,9 +415,25 @@ const Governance = () => {
             {/* Disputes Tab */}
             {activeTab === 'disputes' && (
               <div>
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-6">Active Disputes</h3>
+                <div className="mb-6 flex justify-between items-center">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">Active Disputes</h3>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={fetchDisputes}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      Refresh
+                    </button>
+                    <button
+                      onClick={() => setShowDisputeModal(true)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700"
+                    >
+                      Open New Dispute
+                    </button>
+                  </div>
+                </div>
                 {disputes.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No disputes found.</p>
+                  <p className="text-gray-500 text-center py-8">No disputes found. Click "Open New Dispute" to create one.</p>
                 ) : (
                   <div className="space-y-4">
                     {disputes.map((d) => (
@@ -341,6 +487,123 @@ const Governance = () => {
           </>
         )}
       </div>
+
+      {/* Registration Modal */}
+      {showRegisterModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Register as Governance Candidate</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Candidate Name *</label>
+                <input
+                  type="text"
+                  value={candidateName}
+                  onChange={(e) => setCandidateName(e.target.value)}
+                  placeholder="e.g., John Delegate"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description/Platform</label>
+                <textarea
+                  value={candidateDescription}
+                  onChange={(e) => setCandidateDescription(e.target.value)}
+                  placeholder="What is your vision for this platform?"
+                  rows="3"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <p className="text-sm text-blue-900">
+                  <strong>Minimum Stake Required:</strong> Check your wallet balance. You'll need enough ETH for the stake plus gas fees.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    setShowRegisterModal(false);
+                    setCandidateName('');
+                    setCandidateDescription('');
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRegisterCandidate}
+                  className="flex-1 px-4 py-2 border border-transparent text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md"
+                >
+                  Register
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dispute Modal */}
+      {showDisputeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Open New Dispute</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ride ID *</label>
+                <input
+                  type="number"
+                  value={disputeRideId}
+                  onChange={(e) => setDisputeRideId(e.target.value)}
+                  placeholder="e.g., 1, 2, 3..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">Enter the ride ID you want to dispute</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Evidence/Description *</label>
+                <textarea
+                  value={disputeEvidence}
+                  onChange={(e) => setDisputeEvidence(e.target.value)}
+                  placeholder="Describe the issue with this ride. What went wrong? Why should delegates review this?"
+                  rows="4"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500"
+                />
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                <p className="text-sm text-yellow-900">
+                  <strong>Note:</strong> Disputes are reviewed by elected delegates. The evidence hash will be stored on-chain for transparency.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    setShowDisputeModal(false);
+                    setDisputeRideId('');
+                    setDisputeEvidence('');
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateDispute}
+                  className="flex-1 px-4 py-2 border border-transparent text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
+                >
+                  Submit Dispute
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

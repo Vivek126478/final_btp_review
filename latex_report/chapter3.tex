@@ -1,0 +1,298 @@
+\chapter{System Architecture}
+
+\section{Architecture Overview}
+
+D-CARPOOL follows a three-tier architecture comprising:
+
+\begin{itemize}
+    \item \textbf{Presentation Layer}: React-based frontend with responsive design and MetaMask integration
+    \item \textbf{Application Layer}: Node.js/Express backend with RESTful APIs and cryptographic services
+    \item \textbf{Data Layer}: MySQL database, Ethereum blockchain, and IPFS for decentralized storage
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.9\textwidth}{
+\centering
+\vspace{0.5cm}
+\textbf{Three-Tier Architecture}\\[0.3cm]
+\begin{tabular}{|c|}
+\hline
+\textbf{PRESENTATION LAYER} \\
+React.js + TailwindCSS + MetaMask + Leaflet \\
+\hline
+\end{tabular}\\[0.3cm]
+$\downarrow$ REST API / WebSocket $\downarrow$\\[0.3cm]
+\begin{tabular}{|c|}
+\hline
+\textbf{APPLICATION LAYER} \\
+Node.js + Express + Sequelize + ethers.js \\
+\hline
+\end{tabular}\\[0.3cm]
+$\downarrow$\hspace{2cm}$\downarrow$\hspace{2cm}$\downarrow$\\[0.3cm]
+\begin{tabular}{|c|c|c|}
+\hline
+MySQL & Ethereum & IPFS \\
+Database & Blockchain & Storage \\
+\hline
+\end{tabular}
+\vspace{0.5cm}
+}}
+\caption{System Architecture of D-CARPOOL}
+\end{figure}
+
+\section{Technology Stack}
+
+\subsection{Frontend Technologies}
+
+\begin{itemize}
+    \item \textbf{React.js 18}: Component-based UI framework with hooks
+    \item \textbf{TailwindCSS 3}: Utility-first CSS framework for responsive design
+    \item \textbf{Ethers.js 6}: Ethereum library for blockchain interaction
+    \item \textbf{React Router 6}: Client-side routing for SPA navigation
+    \item \textbf{Axios}: HTTP client for REST API requests
+    \item \textbf{React-Leaflet 4.2.1}: OpenStreetMap integration for maps
+    \item \textbf{React Hot Toast}: User notification system
+    \item \textbf{Lucide React}: Modern icon library
+\end{itemize}
+
+\subsection{Backend Technologies}
+
+\begin{itemize}
+    \item \textbf{Node.js 18}: JavaScript runtime environment
+    \item \textbf{Express.js 4}: Web application framework
+    \item \textbf{MySQL 8}: Relational database management system
+    \item \textbf{Sequelize 6}: Promise-based ORM for Node.js
+    \item \textbf{Nodemailer}: Email service integration for OTP
+    \item \textbf{Bcrypt}: Password hashing library
+    \item \textbf{secrets.js-grempe}: Shamir's Secret Sharing library
+    \item \textbf{merkletreejs}: Merkle tree implementation
+\end{itemize}
+
+\subsection{Blockchain Technologies}
+
+\begin{itemize}
+    \item \textbf{Solidity 0.8.20}: Smart contract programming language
+    \item \textbf{Hardhat}: Ethereum development environment
+    \item \textbf{OpenZeppelin}: Secure smart contract library
+    \item \textbf{IPFS/Pinata}: Distributed file storage
+\end{itemize}
+
+\subsection{Cryptographic Services}
+
+\begin{itemize}
+    \item \textbf{CP-ABE Service (Flask)}: Attribute-based encryption (Port 7001)
+    \item \textbf{Shamir SSS Utility}: Secret splitting and reconstruction
+    \item \textbf{Merkle Tree Utility}: Batch anchoring and proof generation
+\end{itemize}
+
+\section{Database Schema}
+
+The database consists of eight primary tables:
+
+\begin{enumerate}
+    \item \textbf{users}: Stores user account information and wallet addresses
+    \item \textbf{email\_verifications}: Manages OTP verification
+    \item \textbf{rides}: Contains ride details and agreement hashes
+    \item \textbf{ride\_participants}: Tracks ride participation and status
+    \item \textbf{ratings}: Stores user ratings and reviews
+    \item \textbf{complaints}: Manages user complaints with voting
+    \item \textbf{sos\_alerts}: Records emergency alerts with share distribution
+    \item \textbf{tickets}: Manages PNR-based train ticket integration
+\end{enumerate}
+
+\subsection{Entity-Relationship Model}
+
+The relationships between entities are defined as:
+
+\begin{itemize}
+    \item A User can create multiple Rides (one-to-many)
+    \item A User can participate in multiple Rides (many-to-many through ride\_participants)
+    \item A User can give multiple Ratings (one-to-many)
+    \item A User can file multiple Complaints (one-to-many)
+    \item A Ride can have multiple Participants (one-to-many)
+    \item A Ride can have multiple Ratings (one-to-many)
+    \item A User can have multiple SOS configurations (one-to-many)
+\end{itemize}
+
+\section{Smart Contract Architecture}
+
+The blockchain layer consists of eight smart contracts:
+
+\begin{table}[H]
+\centering
+\caption{Smart Contract Deployment}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Contract} & \textbf{Purpose} & \textbf{Address} \\
+\hline
+UserIdentity & Soulbound Token Management & 0xc6e7...4e7d \\
+RideContract & Ride Agreement Hashes & 0x59b6...857b \\
+Reputation & On-chain Ratings & 0x4ed7...e1C1 \\
+DPoSGovernance & Delegate Elections & 0x3228...6c44 \\
+DisputeResolution & Dispute Voting & 0xa852...38f \\
+ZKPDriverVerifier & ZK Proof Verification & 0x4A67...4319 \\
+MerkleAuditTrail & Batch Anchoring & 0x7a20...814F \\
+ShamirSOSVault & SSS Share Commitments & 0x0963...eBef \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{UserIdentity Contract}
+
+Manages Soulbound Token (SBT) for academic identity:
+
+\begin{lstlisting}[language=Java, caption=UserIdentity Contract Structure]
+struct User {
+    address walletAddress;
+    string username;
+    string email;
+    string ipfsHash;
+    bool isActive;
+    uint256 registeredAt;
+    bool hasSBT;  // Soulbound Token status
+}
+\end{lstlisting}
+
+Key functions:
+\begin{itemize}
+    \item \texttt{mintSBT()}: Mint non-transferable academic identity token
+    \item \texttt{verifySBT()}: Check if address has valid SBT
+    \item \texttt{revokeSBT()}: Admin revocation for policy violations
+\end{itemize}
+
+\subsection{RideContract}
+
+Manages ride lifecycle and agreement hashes:
+
+\begin{lstlisting}[language=Java, caption=Ride Agreement Structure]
+struct Ride {
+    uint256 rideId;
+    address host;
+    bytes32 agreementHash;  // keccak256 of ride details
+    uint8 availableSeats;
+    RideStatus status;
+    uint256 createdAt;
+}
+\end{lstlisting}
+
+\subsection{ShamirSOSVault Contract}
+
+Manages emergency data protection with threshold sharing:
+
+\begin{lstlisting}[language=Java, caption=SOS Vault Structure]
+struct SOSConfig {
+    address user;
+    uint8 totalShares;      // n = 5
+    uint8 threshold;        // k = 3
+    bytes32[] shareHashes;  // Commitments
+    bool isActive;
+    uint256 configuredAt;
+}
+\end{lstlisting}
+
+\section{API Architecture}
+
+The backend exposes RESTful APIs organized into eight modules:
+
+\begin{table}[H]
+\centering
+\caption{API Endpoint Categories}
+\begin{tabular}{|l|c|l|}
+\hline
+\textbf{Module} & \textbf{Endpoints} & \textbf{Purpose} \\
+\hline
+Authentication & 4 & User registration, login, wallet linking \\
+Email Verification & 4 & OTP generation, verification, resend \\
+Rides & 10 & CRUD operations, search, join/leave \\
+Ratings & 4 & Submit ratings, get user reputation \\
+Complaints & 5 & File complaints, delegate voting \\
+SOS & 6 & Trigger alerts, SSS operations \\
+Admin & 8 & Platform administration, Merkle anchoring \\
+IPFS & 3 & Document upload, retrieval, verification \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Security Architecture}
+
+\subsection{Multi-Layer Security Model}
+
+D-CARPOOL implements three security layers:
+
+\begin{enumerate}
+    \item \textbf{Layer 1 - Identity \& Access Control}:
+    \begin{itemize}
+        \item Soulbound Tokens for verified academic identity
+        \item JWT authentication with access/refresh tokens
+        \item Email OTP verification for @iiitkottayam.ac.in
+        \item MetaMask wallet connection for blockchain operations
+    \end{itemize}
+    
+    \item \textbf{Layer 2 - Data Protection}:
+    \begin{itemize}
+        \item CP-ABE encryption for vehicle information
+        \item Shamir's Secret Sharing for emergency data (5,3 threshold)
+        \item Keccak256 hashing for ride agreements
+        \item Merkle trees for batch verification
+    \end{itemize}
+    
+    \item \textbf{Layer 3 - Verification \& Governance}:
+    \begin{itemize}
+        \item Zero-Knowledge Proofs for driver verification
+        \item DPoS delegate voting for disputes
+        \item On-chain audit trail for immutable records
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Authentication Flow}
+
+The authentication process follows these steps:
+
+\begin{enumerate}
+    \item User enters institutional email (@iiitkottayam.ac.in)
+    \item System generates 6-digit OTP with 10-minute expiry
+    \item OTP sent via email using SMTP (Gmail)
+    \item User verifies OTP (max 3 attempts)
+    \item Upon verification, user completes registration
+    \item Password hashed using bcrypt (10 salt rounds)
+    \item User connects MetaMask wallet
+    \item System mints Soulbound Token to wallet address
+\end{enumerate}
+
+\subsection{Authorization Mechanism}
+
+Access control is implemented through middleware:
+
+\begin{lstlisting}[language=Java, caption=Authentication Middleware]
+const authenticateToken = async (req, res, next) => {
+    const userId = req.headers['x-user-id'];
+    if (!userId) {
+        return res.status(401).json({
+            error: 'Authentication required'
+        });
+    }
+    const user = await User.findByPk(userId);
+    if (!user || user.isBanned) {
+        return res.status(403).json({
+            error: 'Access denied'
+        });
+    }
+    // Verify SBT on-chain for sensitive operations
+    const hasSBT = await userIdentityContract.verifySBT(user.walletAddress);
+    req.user = user;
+    req.hasSBT = hasSBT;
+    next();
+};
+\end{lstlisting}
+
+\subsection{Data Validation}
+
+Input validation occurs at multiple levels:
+
+\begin{itemize}
+    \item \textbf{Client-side}: React form validation with real-time feedback
+    \item \textbf{API Level}: Express middleware validation
+    \item \textbf{Database Level}: Sequelize model constraints
+    \item \textbf{Smart Contract Level}: Solidity require statements
+\end{itemize}

@@ -1,0 +1,286 @@
+\chapter{Implementation Details}
+
+\section{User Management System}
+
+\subsection{Email Verification System}
+
+The email verification system ensures that only IIIT Kottayam students can register:
+
+\begin{enumerate}
+    \item \textbf{Domain Validation}: Only @iiitkottayam.ac.in emails accepted
+    \item \textbf{OTP Generation}: Cryptographically secure 6-digit codes
+    \item \textbf{Expiry Management}: 10-minute validity period
+    \item \textbf{Rate Limiting}: Maximum 3 verification attempts
+    \item \textbf{Email Delivery}: SMTP integration with Gmail
+\end{enumerate}
+
+The OTP generation uses:
+\begin{equation}
+\text{OTP} = \lfloor 100000 + \text{random}() \times 900000 \rfloor
+\end{equation}
+where $\text{random}()$ generates a value in $[0, 1)$.
+
+\subsection{User Profile Management}
+
+User profiles contain:
+
+\begin{itemize}
+    \item Basic information (username, email, phone, bio)
+    \item Wallet address for blockchain operations
+    \item SBT status (verified academic identity)
+    \item Reputation metrics (average rating, total ratings)
+    \item Activity statistics (rides as host, rides as passenger)
+    \item Cancellation count for accountability
+    \item Emergency contact configuration
+\end{itemize}
+
+\section{Ride Management System}
+
+\subsection{Ride Creation}
+
+When creating a ride, the system:
+
+\begin{enumerate}
+    \item Validates all input fields (locations, datetime, seats)
+    \item Ensures ride datetime is in the future
+    \item Verifies seat count is within limits (1-10)
+    \item Stores vehicle information (make, model, color, plate)
+    \item Encrypts vehicle info using CP-ABE with policy
+    \item Computes agreement hash: $h = \text{keccak256}(\text{rideDetails})$
+    \item Stores hash on RideContract
+    \item Sets initial status as 'active'
+\end{enumerate}
+
+\subsection{CP-ABE Vehicle Encryption}
+
+Vehicle information is encrypted with attribute-based policy:
+
+\begin{lstlisting}[language=Python, caption=CP-ABE Encryption Policy]
+# Policy: Only host OR accepted passengers can decrypt
+policy = "(ride_{rideId}_host) OR (ride_{rideId}_accepted)"
+
+# Encrypt vehicle details
+ciphertext = cpabe_encrypt(
+    public_key,
+    json.dumps({
+        "vehicleMake": "Honda",
+        "vehicleModel": "City",
+        "vehicleColor": "White",
+        "vehiclePlate": "KL-XX-YYYY"
+    }),
+    policy
+)
+\end{lstlisting}
+
+\subsection{Search and Filtering}
+
+The search algorithm implements multiple filters:
+
+\begin{itemize}
+    \item \textbf{Location Matching}: SQL LIKE for partial matches via OpenStreetMap geocoding
+    \item \textbf{Date Filtering}: Searches within specified date range
+    \item \textbf{Seat Availability}: Filters by minimum available seats
+    \item \textbf{Price Range}: Maximum price per seat constraint
+    \item \textbf{Tag Matching}: Multiple tag support with OR logic
+    \item \textbf{Status Filter}: Only shows active rides by default
+\end{itemize}
+
+\subsection{Ride Participation}
+
+The join ride functionality:
+
+\begin{enumerate}
+    \item Verifies ride is active
+    \item Checks available seats $> 0$
+    \item Confirms user is not the host
+    \item Verifies user has valid SBT on-chain
+    \item Prevents duplicate participation
+    \item Decrements available seats atomically
+    \item Creates participation record with 'pending' status
+    \item Issues CP-ABE key with passenger attributes
+    \item Notifies host for approval
+\end{enumerate}
+
+\begin{theorem}
+The seat allocation mechanism is atomic, preventing race conditions where multiple users attempt to join simultaneously.
+\end{theorem}
+
+\begin{proof}
+The system uses database transactions with row-level locking. When a user attempts to join, the ride record is locked using SELECT FOR UPDATE, ensuring that concurrent requests are serialized. The available seats are checked and decremented within the same transaction, guaranteeing consistency.
+\end{proof}
+
+\section{Rating and Reputation System}
+
+\subsection{Rating Submission}
+
+Ratings can be submitted after ride completion:
+
+\begin{itemize}
+    \item Stars: Integer value from 0 to 5
+    \item Comment: Optional text feedback
+    \item Rater: User who submits the rating
+    \item Ratee: User being rated
+    \item Ride reference: Links rating to specific ride
+    \item On-chain submission: Rating hash stored on Reputation contract
+\end{itemize}
+
+Constraints enforced:
+\begin{lstlisting}[language=Java, caption=Rating Validation Rules]
+// Validation rules
+stars >= 0 && stars <= 5
+rater !== ratee
+!hasAlreadyRated(rater, ratee, rideId)
+ride.status === 'completed'
+verifySBT(rater.walletAddress) === true
+\end{lstlisting}
+
+\subsection{Reputation Calculation}
+
+The average rating for user $u$ is:
+\begin{equation}
+R_u = \frac{1}{n} \sum_{i=1}^{n} s_i
+\end{equation}
+where $n$ is the total number of ratings and $s_i$ is the star value of rating $i$.
+
+For on-chain storage with 2 decimal precision:
+\begin{equation}
+R_{\text{onchain}} = \lfloor R_u \times 100 \rfloor
+\end{equation}
+
+\section{Emergency SOS System}
+
+\subsection{SOS Alert Mechanism with Shamir's Secret Sharing}
+
+When a user triggers an SOS:
+
+\begin{enumerate}
+    \item Current location captured (GPS coordinates)
+    \item Emergency data retrieved from SSS shares
+    \item Threshold check: Need $k=3$ out of $n=5$ shares
+    \item Data reconstructed using Lagrange interpolation
+    \item Alert stored with location and timestamp
+    \item Email notifications sent to emergency contacts
+    \item On-chain event emitted via ShamirSOSVault
+\end{enumerate}
+
+\subsection{Secret Sharing Configuration}
+
+Users configure emergency data distribution:
+
+\begin{lstlisting}[language=Java, caption=Shamir's Secret Sharing Setup]
+// Emergency data to protect
+const emergencyData = {
+    contact1: "Mom: +91-9876543210",
+    contact2: "Dad: +91-9876543211",
+    bloodGroup: "O+",
+    allergies: ["penicillin"],
+    homeAddress: "123 Main St, Kerala"
+};
+
+// Split into 5 shares with threshold 3
+const shares = shamirSSS.splitSecret(
+    JSON.stringify(emergencyData),
+    5,  // total shares
+    3   // threshold
+);
+
+// Distribute shares
+// Share 1 -> Platform Admin (auto)
+// Share 2 -> User's encrypted wallet backup
+// Share 3 -> Trusted Contact 1
+// Share 4 -> Trusted Contact 2
+// Share 5 -> IPFS backup (encrypted)
+\end{lstlisting}
+
+\subsection{Secret Reconstruction}
+
+During SOS:
+\begin{equation}
+S = \sum_{i=1}^{k} y_i \prod_{j=1, j \neq i}^{k} \frac{x_j}{x_j - x_i} \mod p
+\end{equation}
+
+where $(x_i, y_i)$ are the share coordinates and $p$ is a large prime.
+
+\subsection{Location Services}
+
+For users with GPS enabled:
+\begin{equation}
+\text{Location URL} = \text{``https://maps.google.com/maps?q=''} + \text{lat} + \text{``,''} + \text{lng}
+\end{equation}
+
+\section{Administrative Features}
+
+\subsection{User Management}
+
+Administrators can:
+
+\begin{itemize}
+    \item View all registered users with SBT status
+    \item Search users by username, email, or wallet address
+    \item Ban/unban users (triggers SBT revocation on-chain)
+    \item View user activity (rides, ratings, complaints)
+    \item Monitor cancellation patterns
+\end{itemize}
+
+\subsection{Complaint Management with DPoS Voting}
+
+The complaint workflow:
+
+\begin{enumerate}
+    \item User files complaint with category and description
+    \item Status initialized as 'pending'
+    \item Complaint submitted to DisputeResolution contract
+    \item Active DPoS delegates notified
+    \item Delegates cast votes within 24-hour window:
+    \begin{itemize}
+        \item FAVOR\_COMPLAINANT
+        \item FAVOR\_ACCUSED  
+        \item ABSTAIN
+    \end{itemize}
+    \item Quorum check: Need 3/5 delegates to vote
+    \item Resolution executed based on majority
+    \item Reputation impact applied on-chain
+\end{enumerate}
+
+\subsection{Merkle Tree Audit Anchoring}
+
+Daily batch anchoring process:
+
+\begin{lstlisting}[language=Java, caption=Merkle Tree Anchoring]
+// Collect all rides from past 24 hours
+const rides = await Ride.findAll({
+    where: {
+        createdAt: { [Op.gte]: yesterday }
+    }
+});
+
+// Build Merkle tree from ride hashes
+const leaves = rides.map(r => keccak256(r.agreementHash));
+const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+const root = tree.getHexRoot();
+
+// Anchor root on-chain
+await merkleAuditTrail.anchorRoot(root, rides.length, Date.now());
+\end{lstlisting}
+
+\subsection{Dashboard Statistics}
+
+The admin dashboard displays:
+
+\begin{table}[H]
+\centering
+\caption{Dashboard Metrics}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Category} & \textbf{Metrics} \\
+\hline
+Users & Total, Active, Banned, SBT Verified \\
+Rides & Total, Active, Completed, Cancelled \\
+Complaints & Total, Pending, Resolved, Delegate Votes \\
+SOS Alerts & Total, Active, Reconstructions \\
+Ratings & Total submitted, Average platform rating \\
+Merkle Anchors & Total roots, Verified proofs \\
+CP-ABE & Active keys, Encrypted rides \\
+\hline
+\end{tabular}
+\end{table}

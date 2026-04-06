@@ -1,0 +1,141 @@
+\chapter{Literature Review}
+
+\section{Blockchain Technology in Transportation}
+
+Blockchain technology has gained significant attention in various domains, including transportation and mobility services. This section reviews existing research and implementations related to blockchain-based carpooling and ride-sharing systems.
+
+\subsection{Fundamentals of Blockchain}
+
+\begin{definition}
+A \textbf{blockchain} is a distributed ledger technology that maintains a continuously growing list of records, called blocks, which are linked and secured using cryptography.
+\end{definition}
+
+The key properties of blockchain that make it suitable for carpooling applications are:
+
+\begin{itemize}
+    \item \textbf{Decentralization}: No single point of control or failure
+    \item \textbf{Immutability}: Once recorded, data cannot be altered retroactively
+    \item \textbf{Transparency}: All transactions are visible to network participants
+    \item \textbf{Security}: Cryptographic techniques ensure data integrity
+\end{itemize}
+
+\begin{theorem}
+In a blockchain network with $n$ nodes, maintaining consensus requires at least $\lceil \frac{n}{2} \rceil + 1$ honest nodes under Byzantine Fault Tolerance.
+\end{theorem}
+
+\begin{proof}
+For a network to reach consensus in the presence of Byzantine failures, where up to $f$ nodes may be faulty, the total number of nodes $n$ must satisfy $n \geq 3f + 1$. This ensures that honest nodes form a majority and can override malicious behavior. For simple majority consensus, we require more than half of the nodes to be honest, hence $\lceil \frac{n}{2} \rceil + 1$ nodes.
+\end{proof}
+
+\section{Cryptographic Protocols in Decentralized Systems}
+
+\subsection{Soulbound Tokens}
+
+Vitalik Buterin (2022) introduced the concept of Soulbound Tokens (SBTs) as non-transferable NFTs that represent credentials, affiliations, or commitments. Unlike traditional tokens, SBTs cannot be sold or transferred, making them ideal for identity verification.
+
+\begin{definition}
+A \textbf{Soulbound Token (SBT)} is a non-transferable token permanently bound to a specific wallet address, representing verifiable credentials or identity attributes.
+\end{definition}
+
+\subsection{Zero-Knowledge Proofs}
+
+Goldwasser, Micali, and Rackoff (1985) formalized Zero-Knowledge Proofs, allowing one party to prove knowledge of a secret without revealing the secret itself.
+
+\begin{theorem}[Zero-Knowledge Property]
+A proof system $(P, V)$ is zero-knowledge if for every verifier $V^*$, there exists a simulator $S$ such that the view of $V^*$ when interacting with $P$ is computationally indistinguishable from the output of $S$.
+\end{theorem}
+
+\subsection{Merkle Trees}
+
+Ralph Merkle (1979) introduced Merkle trees for efficient verification of data integrity in distributed systems.
+
+\begin{definition}
+A \textbf{Merkle Tree} is a binary tree where each leaf node is a hash of a data block, and each non-leaf node is a hash of its children. The root hash serves as a cryptographic commitment to all data.
+\end{definition}
+
+For a tree with $n$ leaves:
+\begin{equation}
+\text{Proof Size} = O(\log n)
+\end{equation}
+
+\subsection{Attribute-Based Encryption}
+
+Bethencourt, Sahai, and Waters (2007) proposed Ciphertext-Policy Attribute-Based Encryption (CP-ABE), enabling fine-grained access control.
+
+\begin{definition}
+\textbf{CP-ABE} is an encryption scheme where ciphertext is associated with an access policy, and decryption is possible only if a user's attributes satisfy the policy.
+\end{definition}
+
+\subsection{Secret Sharing Schemes}
+
+Adi Shamir (1979) introduced Shamir's Secret Sharing, a cryptographic algorithm to distribute a secret among multiple parties.
+
+\begin{theorem}[Shamir's Secret Sharing Security]
+In a $(k, n)$ threshold scheme, any $k-1$ or fewer shares reveal absolutely no information about the secret. This is information-theoretic security, not computational security.
+\end{theorem}
+
+The secret $S$ is encoded as the constant term of a polynomial of degree $k-1$:
+\begin{equation}
+f(x) = S + a_1x + a_2x^2 + \cdots + a_{k-1}x^{k-1} \mod p
+\end{equation}
+
+\section{Related Work}
+
+Several studies have explored blockchain applications in ride-sharing:
+
+\subsection{Decentralized Carpooling Management}
+
+Ravi and Giriprasad (2019) proposed a decentralized carpooling application using blockchain technology to manage transactions securely between drivers and passengers. Their work demonstrated the feasibility of eliminating intermediaries while maintaining security. However, they did not address privacy-preserving verification or emergency mechanisms.
+
+\subsection{Blockchain-based Carpooling for Sustainable Urban Mobility}
+
+Awan et al. (2020) presented a blockchain-based system aimed at promoting sustainable urban mobility. Their research highlighted the potential for reducing traffic congestion through transparent and efficient carpooling mechanisms. The limitation was the lack of cryptographic access control for sensitive data.
+
+\subsection{Smart Contract-based Systems}
+
+Park et al. (2020) developed a blockchain-based carpooling system using smart contracts for secure and efficient ridesharing. They demonstrated that smart contracts can automate matching algorithms and payment processes, reducing transaction overhead. However, they did not implement advanced cryptographic protocols for identity management.
+
+\begin{remark}
+While existing literature demonstrates the theoretical benefits of blockchain in carpooling, practical implementations often face challenges in scalability, user adoption, integration with existing infrastructure, and comprehensive security mechanisms.
+\end{remark}
+
+\section{Gaps in Existing Research}
+
+Analysis of existing literature reveals several gaps that D-CARPOOL addresses:
+
+\begin{enumerate}
+    \item \textbf{Identity Management}: Most systems lack non-transferable identity tokens. D-CARPOOL implements Soulbound Tokens for academic identity.
+    
+    \item \textbf{Privacy-Preserving Verification}: Existing systems expose sensitive credentials during verification. D-CARPOOL uses Zero-Knowledge Proofs for driver license verification.
+    
+    \item \textbf{Efficient Audit Trails}: No implementation uses Merkle trees for batch ride verification. D-CARPOOL anchors daily ride batches with O(log n) verification.
+    
+    \item \textbf{Fine-Grained Access Control}: Vehicle information is either public or completely hidden. D-CARPOOL implements CP-ABE for attribute-based decryption.
+    
+    \item \textbf{Distributed Emergency Data}: Emergency systems are single points of failure. D-CARPOOL uses Shamir's Secret Sharing for threshold-based protection.
+    
+    \item \textbf{Decentralized Dispute Resolution}: Disputes are resolved by centralized admins. D-CARPOOL implements DPoS governance with delegate voting.
+    
+    \item \textbf{Comprehensive Implementation}: Most papers present theoretical frameworks. D-CARPOOL provides a complete, working implementation with 8 deployed smart contracts.
+\end{enumerate}
+
+\section{Comparative Analysis}
+
+\begin{table}[H]
+\centering
+\caption{Comparison of D-CARPOOL with Existing Systems}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Feature} & \textbf{Traditional} & \textbf{Ravi (2019)} & \textbf{Park (2020)} & \textbf{D-CARPOOL} \\
+\hline
+Decentralized & No & Yes & Yes & Yes \\
+SBT Identity & No & No & No & Yes \\
+ZK Proofs & No & No & No & Yes \\
+Merkle Audit & No & No & No & Yes \\
+CP-ABE Encryption & No & No & No & Yes \\
+Secret Sharing & No & No & No & Yes \\
+DPoS Governance & No & No & No & Yes \\
+Smart Contracts & No & Yes & Yes & 8 Contracts \\
+\hline
+\end{tabular}
+\end{table}

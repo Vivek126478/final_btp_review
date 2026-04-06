@@ -208,6 +208,9 @@ const Admin = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Ride ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Driver
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -227,6 +230,9 @@ const Admin = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {rides.map((ride) => (
                     <tr key={ride.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-mono font-bold text-indigo-600">#{ride.id}</span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">{ride.host?.username || 'N/A'}</td>
                       <td className="px-6 py-4">
                         {ride.startLocation} → {ride.endLocation}

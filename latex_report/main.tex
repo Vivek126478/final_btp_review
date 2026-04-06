@@ -1,0 +1,190 @@
+\documentclass[12pt]{report}
+
+\usepackage{amsthm,amssymb,setspace}
+\usepackage{longtable}
+\usepackage{parskip}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{array}
+\usepackage{booktabs}
+
+\renewcommand{\bibname}{References}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{notation}[theorem]{Notation}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% Code listing style
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!50!black},
+    stringstyle=\color{red},
+    showstringspaces=false
+}
+
+\renewcommand{\baselinestretch}{1.5}
+\begin{document}
+
+% --------------- Title page -----------------------
+\begin{titlepage}
+\enlargethispage{2cm}
+
+\begin{center}
+
+\vspace*{-1cm}
+
+\textbf{\Large DECENTRALIZED CAB-SHARING SYSTEM USING BLOCKCHAIN TECHNOLOGY WITH ADVANCED CRYPTOGRAPHIC SECURITY}\\
+
+\vspace*{1.0 cm}
+
+A Project Report Submitted \\
+in Partial Fulfilment of the Requirements  \\
+for the Degree of  \\
+\vspace{4.5mm}
+{\Large \bf Bachelor of Technology} \\
+in \\
+{\large \bf Computer Science and Engineering} \\
+with Specialization in\\
+{\large \bf Cyber Security } \\
+\vspace{3.85mm}
+{\em  by} \\ \vspace{2.5mm}
+{\large \bf G. Sai Vivek Reddy} {\large \bf (Roll No. 2022BCY0028)}\\
+{\large \bf Sarthak Gupta} {\large \bf (Roll No. 2022BCY0054)}\\
+{\large \bf Hisham Abdul Asis KV} {\large \bf (Roll No. 2022BCY0001)}\\
+
+\vfill
+
+\begin{figure}[h]
+  \begin{center}
+  \includegraphics[width=6cm, height=3cm]{logo2.jpg}
+  \end{center}
+\end{figure}
+
+{\em\large to }\\
+{\bf \mbox{DEPARTMENT OF CSE-CYBER SECURITY}} \\
+{\small \bf \mbox{INDIAN INSTITUTE OF INFORMATION TECHNOLOGY KOTTAYAM}}\\
+{ KERALA - 686635, INDIA}\\
+{\it April 2026}
+
+\end{center}
+
+\end{titlepage}
+
+\clearpage
+
+% --------------- Declaration page -----------------------
+\pagenumbering{roman} \setcounter{page}{2}
+\begin{center}
+{\large{\bf{DECLARATION}}}
+\end{center}
+
+\noindent We, \textbf{G. Sai Vivek Reddy} (\textbf{Roll No: 2022BCY0028}), \textbf{Sarthak Gupta} (\textbf{Roll No: 2022BCY0054}), \textbf{Hisham Abdul Asis KV} (\textbf{Roll No: 2022BCY0001}), hereby declare that, this report entitled \textbf{``Decentralized Cab-Sharing System Using Blockchain Technology with Advanced Cryptographic Security''} submitted to Indian Institute of Information Technology Kottayam towards partial requirement of {\bf Bachelor of Technology} in \textbf{Computer Science and Engineering} with specialization in \textbf{Cyber Security} is an original work carried out by us under the supervision of \textbf{Dr. Sreelakshmy I J} and has not formed the basis for the award of any degree or diploma, in this or any other institution or university. We have sincerely tried to uphold the academic ethics and honesty. Whenever an external information or statement or result is used then, that have been duly acknowledged and cited.
+
+\vspace{4cm}
+
+\noindent Kottayam-686635 \hfill \textbf{G. Sai Vivek Reddy - 2022BCY0028}
+
+\noindent April 2026 \hfill \textbf{Sarthak Gupta - 2022BCY0054}
+
+\noindent \hfill \textbf{Hisham Abdul Asis KV - 2022BCY0001}
+
+\clearpage
+
+% --------------- Certificate page -----------------------
+\pagenumbering{roman} \setcounter{page}{3}
+\begin{center}
+{\large{\bf{CERTIFICATE}}}
+\end{center}
+
+\noindent This is to certify that the work contained in this project report entitled \textbf{``Decentralized Cab-Sharing System Using Blockchain Technology with Advanced Cryptographic Security''} submitted by \textbf{G. Sai Vivek Reddy} (\textbf{Roll No: 2022BCY0028}), \textbf{Sarthak Gupta} (\textbf{Roll No: 2022BCY0054}), \textbf{Hisham Abdul Asis KV} (\textbf{Roll No: 2022BCY0001}) to the Indian Institute of Information Technology Kottayam towards partial requirement of {\bf Bachelor of Technology} in \textbf{Computer Science and Engineering} with specialization in \textbf{Cyber Security} has been carried out by them under my supervision and that it has not been submitted elsewhere for the award of any degree.
+
+\vspace{4cm}
+
+\noindent Kottayam-686635 \hfill (Dr. Sreelakshmy I J)
+
+\noindent April 2026 \hfill Project Supervisor
+
+\clearpage
+
+% --------------- Acknowledgment page -----------------------
+\begin{center}
+{\large{\bf{ACKNOWLEDGMENT}}}
+\end{center}
+
+\noindent We would like to express our sincere gratitude to our project supervisor, \textbf{Dr. Sreelakshmy I J}, for her invaluable guidance, continuous support, and encouragement throughout this project. Her expertise in blockchain technology and cybersecurity has been instrumental in shaping our understanding of decentralized systems.
+
+\noindent We extend our heartfelt thanks to the \textbf{Department of CSE-Cyber Security}, IIIT Kottayam, for providing us with the necessary resources and infrastructure to complete this project successfully.
+
+\noindent We are grateful to our families and friends for their unwavering support and motivation during this academic journey.
+
+\noindent Finally, we thank the open-source community for providing excellent tools and libraries including React.js, Node.js, Hardhat, and OpenZeppelin that made this project possible.
+
+\vspace{4cm}
+\hspace*{\fill}{\large G. Sai Vivek Reddy (Roll No. 2022BCY0028)}\\
+\hspace*{\fill}{\large Sarthak Gupta (Roll No. 2022BCY0054)}\\
+\hspace*{\fill}{\large Hisham Abdul Asis KV (Roll No. 2022BCY0001)}
+
+\clearpage
+
+% --------------- Abstract page -----------------------
+\begin{center}
+{\Large{\bf{ABSTRACT}}
+\addcontentsline{toc}{chapter}{Abstract}
+}
+\end{center}
+
+The main aim of this project is to develop a decentralized peer-to-peer carpooling platform that leverages blockchain technology and advanced cryptographic protocols to create a secure, transparent, and trustless environment for ride-sharing. D-CARPOOL addresses the limitations of traditional centralized carpooling services by eliminating intermediaries, reducing transaction costs, and providing enhanced security through multiple blockchain-based mechanisms.
+
+This report presents the design and implementation of D-CARPOOL, which combines modern web technologies with comprehensive blockchain integration. The system comprises four main components: a React-based frontend with TailwindCSS for responsive user interfaces, a Node.js/Express backend with MySQL database for efficient data management, Solidity smart contracts deployed on Ethereum for decentralized operations, and specialized cryptographic services for advanced security features.
+
+The implementation includes seven distinct blockchain security mechanisms: \textbf{Soulbound Tokens (SBT)} for non-transferable academic identity verification, \textbf{Zero-Knowledge Proofs (ZKP)} for privacy-preserving driver verification, \textbf{On-chain Hash Integrity} for tamper-proof ride agreements, \textbf{DPoS Governance} for decentralized dispute resolution, \textbf{Merkle Tree Audit Trail} for efficient ride history verification, \textbf{CP-ABE Encryption} for attribute-based access control, and \textbf{Shamir's Secret Sharing} for threshold-based emergency data protection.
+
+The platform features comprehensive functionalities including email-based authentication with OTP verification, ride creation and management, real-time search and filtering capabilities, on-chain reputation system, emergency SOS alerts with distributed secret sharing, complaint management with delegate voting, and administrative controls. The platform is designed specifically for IIIT Kottayam students using institutional email verification (@iiitkottayam.ac.in).
+
+This project demonstrates the practical application of blockchain technology and cryptographic protocols in solving real-world transportation problems while promoting sustainable mobility, community building, and privacy protection through a zero-trust architecture.
+
+\clearpage
+
+\tableofcontents
+\clearpage
+
+\listoffigures
+\listoftables
+
+\newpage
+
+% =========== Main chapters ===========
+\pagenumbering{arabic} \setcounter{page}{1}
+
+\input{chapter1.tex}
+\input{chapter2.tex}
+\input{chapter3.tex}
+\input{chapter4.tex}
+\input{chapter5.tex}
+\input{chapter6.tex}
+\input{conclusion.tex}
+
+\addcontentsline{toc}{chapter}{References}
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
