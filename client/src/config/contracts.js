@@ -15,4 +15,4 @@ export const BLOCKCHAIN_CONFIG = {
   chainName: process.env.REACT_APP_CHAIN_NAME || 'Localhost'
 };
 
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';

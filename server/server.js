@@ -9,7 +9,7 @@ const envPath = fs.existsSync(rootEnvPath) ? rootEnvPath : rootEnvExamplePath;
 require('dotenv').config({ path: envPath });
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Initialize Cron Jobs
 const initPnrCron = require('./cron/pnrUpdater');

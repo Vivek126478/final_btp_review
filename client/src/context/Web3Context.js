@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../utils/api';
-import { connectWallet } from '../utils/web3';
+import { connectWallet, getEthereumProvider } from '../utils/web3';
 import toast from 'react-hot-toast';
 
 const Web3Context = createContext();
@@ -26,9 +26,10 @@ export const Web3Provider = ({ children }) => {
     
     // Cleanup event listeners on unmount
     return () => {
-      if (window.ethereum) {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum.removeListener('chainChanged', handleChainChanged);
+      const eth = getEthereumProvider();
+      if (eth) {
+        eth.removeListener('accountsChanged', handleAccountsChanged);
+        eth.removeListener('chainChanged', handleChainChanged);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -50,9 +51,10 @@ export const Web3Provider = ({ children }) => {
   };
 
   const setupEventListeners = () => {
-    if (window.ethereum) {
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('chainChanged', handleChainChanged);
+    const eth = getEthereumProvider();
+    if (eth) {
+      eth.on('accountsChanged', handleAccountsChanged);
+      eth.on('chainChanged', handleChainChanged);
     }
   };
 

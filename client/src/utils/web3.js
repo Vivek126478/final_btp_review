@@ -1,18 +1,64 @@
 import { ethers } from 'ethers';
 import { BLOCKCHAIN_CONFIG } from '../config/contracts';
 
+// Resolve the correct ethereum provider, handling multi-wallet (EIP-6963)
+// and delayed injection scenarios.
+export const getEthereumProvider = () => {
+  if (window.ethereum?.providers?.length) {
+    // Multiple wallet extensions installed – pick MetaMask specifically
+    return window.ethereum.providers.find((p) => p.isMetaMask) || window.ethereum;
+  }
+  return window.ethereum;
+};
+
+// Wait for MetaMask to inject window.ethereum (handles delayed injection)
+const waitForEthereum = (timeout = 3000) =>
+  new Promise((resolve, reject) => {
+    const provider = getEthereumProvider();
+    if (provider) {
+      resolve(provider);
+      return;
+    }
+
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        reject(
+          new Error(
+            'MetaMask not installed. Please install MetaMask to use wallet features.'
+          )
+        );
+      }
+    }, timeout);
+
+    // MetaMask fires this event when injection finishes after page load
+    window.addEventListener(
+      'ethereum#initialized',
+      () => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve(getEthereumProvider());
+        }
+      },
+      { once: true }
+    );
+  });
+
 // Connects to MetaMask and switches to the correct chain.
 // Returns the wallet address on success.
 // Throws an error if MetaMask is unavailable or user rejects the connection.
 export const connectWallet = async () => {
-  if (!window.ethereum) {
-    // MetaMask is not installed – throw so callers can handle gracefully
+  const provider = await waitForEthereum();
+
+  if (!provider) {
     throw new Error('MetaMask not installed. Please install MetaMask to use wallet features.');
   }
 
   try {
     // Request account access
-    const accounts = await window.ethereum.request({
+    const accounts = await provider.request({
       method: 'eth_requestAccounts'
     });
 
@@ -22,12 +68,12 @@ export const connectWallet = async () => {
 
     // Try to switch to the correct network (best-effort, don't block login)
     try {
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+      const chainId = await provider.request({ method: 'eth_chainId' });
       const expectedChainId = `0x${BLOCKCHAIN_CONFIG.chainId.toString(16)}`;
 
       if (chainId !== expectedChainId) {
         try {
-          await window.ethereum.request({
+          await provider.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: expectedChainId }]
           });
@@ -35,7 +81,7 @@ export const connectWallet = async () => {
           // Chain doesn't exist – try to add it
           if (switchError.code === 4902) {
             try {
-              await window.ethereum.request({
+              await provider.request({
                 method: 'wallet_addEthereumChain',
                 params: [{
                   chainId: expectedChainId,
@@ -67,8 +113,9 @@ export const connectWallet = async () => {
 };
 
 export const getProvider = () => {
-  if (!window.ethereum) return null;
-  return new ethers.BrowserProvider(window.ethereum);
+  const eth = getEthereumProvider();
+  if (!eth) return null;
+  return new ethers.BrowserProvider(eth);
 };
 
 export const getSigner = async () => {

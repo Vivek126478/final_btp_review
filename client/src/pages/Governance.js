@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getContract, formatAddress, formatEther, parseEther } from '../utils/web3';
+import { getContract, formatAddress, formatEther, parseEther, getEthereumProvider } from '../utils/web3';
 import { connectWallet } from '../utils/web3';
 import { CONTRACT_ADDRESSES } from '../config/contracts';
 import DPoSGovernanceABI from '../contracts/DPoSGovernance.json';
@@ -20,7 +20,7 @@ const Governance = () => {
   useEffect(() => {
     const initContracts = async () => {
       try {
-        if (!window.ethereum) return;
+        if (!getEthereumProvider()) return;
         const address = await connectWallet();
         setUserAddress(address);
 

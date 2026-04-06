@@ -7,7 +7,7 @@ import { useWeb3 } from '../context/Web3Context';
 import LoadingSpinner from '../components/LoadingSpinner';
 import toast from 'react-hot-toast';
 import { ethers } from 'ethers';
-import { getContract } from '../utils/web3';
+import { getContract, getEthereumProvider } from '../utils/web3';
 import RideContractABI from '../contracts/RideContract.json';
 import { CONTRACT_ADDRESSES } from '../config/contracts';
 
@@ -107,7 +107,7 @@ const RideDetails = () => {
         );
         const messageHash = ethers.keccak256(packedData);
         
-        const provider = new ethers.BrowserProvider(window.ethereum);
+        const provider = new ethers.BrowserProvider(getEthereumProvider());
         const signer = await provider.getSigner();
         
         const signature = await signer.signMessage(ethers.getBytes(messageHash));

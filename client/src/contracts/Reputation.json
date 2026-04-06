@@ -1,32 +1,5 @@
 [
   {
-    "inputs": [],
-    "name": "ECDSAInvalidSignature",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "length",
-        "type": "uint256"
-      }
-    ],
-    "name": "ECDSAInvalidSignatureLength",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "s",
-        "type": "bytes32"
-      }
-    ],
-    "name": "ECDSAInvalidSignatureS",
-    "type": "error"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -378,44 +351,6 @@
       }
     ],
     "name": "submitRating",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_rater",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_ratee",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_rideId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint8",
-        "name": "_stars",
-        "type": "uint8"
-      },
-      {
-        "internalType": "string",
-        "name": "_comment",
-        "type": "string"
-      },
-      {
-        "internalType": "bytes",
-        "name": "_signature",
-        "type": "bytes"
-      }
-    ],
-    "name": "submitRatingGasless",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
