@@ -42,6 +42,8 @@ app.use('/api/ratings', require('./routes/ratings'));
 app.use('/api/complaints', require('./routes/complaints'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/tickets', require('./routes/tickets'));
+app.use('/api/sos', require('./routes/sos'));
+app.use('/api/ipfs', require('./routes/ipfs'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

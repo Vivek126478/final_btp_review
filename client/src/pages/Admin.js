@@ -348,7 +348,7 @@ const MerkleAuditPanel = () => {
       if (res.data.batchId !== null) {
         toast.success(`Anchored ${res.data.rideCount} rides to blockchain!`);
       } else {
-        toast.info(res.data.message || 'No rides to anchor');
+        toast(res.data.message || 'No rides to anchor', { icon: 'ℹ️' });
       }
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to anchor rides');

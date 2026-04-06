@@ -62,7 +62,7 @@ const SearchRides = () => {
       if (ticketToUse) {
         const ticketTime = new Date(ticketToUse.departureTime).getTime();
         fetched = fetched.filter(ride => {
-           const rideTime = new Date(ride.departureTime).getTime();
+           const rideTime = new Date(ride.rideDateTime).getTime();
            const diffHours = (ticketTime - rideTime) / (1000 * 60 * 60);
            // Must depart 1 to 9 hours before train (gives driving time + safe buffer)
            return diffHours > 0 && diffHours <= 9;

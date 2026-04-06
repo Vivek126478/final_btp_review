@@ -87,7 +87,8 @@ export const connectWallet = async () => {
                   chainId: expectedChainId,
                   chainName: BLOCKCHAIN_CONFIG.chainName,
                   rpcUrls: [BLOCKCHAIN_CONFIG.rpcUrl],
-                  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }
+                  nativeCurrency: { name: 'SepoliaETH', symbol: 'ETH', decimals: 18 },
+                  blockExplorerUrls: [BLOCKCHAIN_CONFIG.blockExplorerUrl]
                 }]
               });
             } catch (addErr) {

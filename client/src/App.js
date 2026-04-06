@@ -41,12 +41,14 @@ function App() {
             <Route
               path="/ticket-check"
               element={
-                <ProtectedRoute>
-                  <TicketCheck />
-                </ProtectedRoute>
+                <>
+                  <Navbar />
+                  <ProtectedRoute>
+                    <TicketCheck />
+                  </ProtectedRoute>
+                </>
               }
             />
-            <Route path="/login" element={<Login />} />
             <Route
               path="/search"
               element={

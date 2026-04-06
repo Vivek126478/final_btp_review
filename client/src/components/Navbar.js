@@ -1,12 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useWeb3 } from '../context/Web3Context';
-import { Car, User, LogOut, Shield, Fingerprint } from 'lucide-react';
+import { Car, User, LogOut, Shield, Wallet } from 'lucide-react';
 import { formatAddress } from '../utils/web3';
 
 const Navbar = () => {
-  const { user, isConnected, disconnect } = useWeb3();
+  const { user, isConnected, walletConnected, account, disconnect, reconnectWallet, isConnecting } = useWeb3();
   const navigate = useNavigate();
+  const [reconnecting, setReconnecting] = useState(false);
+
+  const handleReconnectWallet = async () => {
+    setReconnecting(true);
+    try {
+      await reconnectWallet();
+    } catch (_) {
+      // error already toasted in context
+    } finally {
+      setReconnecting(false);
+    }
+  };
 
   const handleDisconnect = () => {
     disconnect();
@@ -67,6 +79,18 @@ const Navbar = () => {
           <div className="flex items-center space-x-4">
             {isConnected ? (
               <>
+                {!walletConnected && (
+                  <button
+                    onClick={handleReconnectWallet}
+                    disabled={reconnecting || isConnecting}
+                    className="flex items-center space-x-2 px-4 py-2 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition border border-amber-200 disabled:opacity-50"
+                  >
+                    <Wallet className="h-5 w-5" />
+                    <span className="hidden md:inline">
+                      {reconnecting ? 'Connecting...' : 'Connect Wallet'}
+                    </span>
+                  </button>
+                )}
                 <Link
                   to="/profile"
                   className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition"
@@ -74,7 +98,9 @@ const Navbar = () => {
                   <User className="h-5 w-5 text-gray-600" />
                   <div className="hidden md:block">
                     <p className="text-sm font-medium text-gray-900">{user?.username}</p>
-                    <p className="text-xs text-gray-500">{formatAddress(user?.walletAddress)}</p>
+                    <p className="text-xs text-gray-500">
+                      {walletConnected ? formatAddress(account) : formatAddress(user?.walletAddress)}
+                    </p>
                   </div>
                 </Link>
                 <button

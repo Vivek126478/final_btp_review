@@ -100,7 +100,11 @@ const RideDetails = () => {
   const handleGenerateBoardingPass = async () => {
     if (!requireLogin()) return;
     try {
-        const rideHostAddress = ride.host.walletAddress || ride.host.id; 
+        const rideHostAddress = ride.host?.walletAddress;
+        if (!rideHostAddress) {
+          toast.error("Host wallet address not available for boarding pass.");
+          return;
+        }
         const packedData = ethers.solidityPacked(
             ['uint256', 'address', 'string'],
             [id, rideHostAddress, "BOARDING_PASS"]
@@ -123,10 +127,13 @@ const RideDetails = () => {
     try {
         const sig = otpInputs[participant.riderId];
         if (!sig || !sig.startsWith('0x')) return toast.error("Please paste the valid 0x signature");
-        
+
+        const riderWallet = participant.rider?.walletAddress;
+        if (!riderWallet) return toast.error("Rider wallet address not available");
+
         setActionLoading(true);
         const contract = await getContract(CONTRACT_ADDRESSES.RideContract, RideContractABI);
-        const tx = await contract.boardRider(id, participant.rider.walletAddress || participant.rider.id, sig, { gasLimit: 500000 });
+        const tx = await contract.boardRider(id, riderWallet, sig, { gasLimit: 500000 });
         toast.loading("Verifying Handshake on Blockchain...");
         await tx.wait();
         toast.success("Passenger cryptographically verified & marked as boarded!");

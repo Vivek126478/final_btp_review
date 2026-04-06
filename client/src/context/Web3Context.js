@@ -175,16 +175,32 @@ export const Web3Provider = ({ children }) => {
     }
   };
 
+  const reconnectWallet = async () => {
+    setIsConnecting(true);
+    try {
+      const address = await requestWalletAddress();
+      toast.success('Wallet reconnected!');
+      return address;
+    } catch (err) {
+      toast.error(err?.message || 'Failed to reconnect wallet');
+      throw err;
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
   const value = {
     account,
     user,
     loading,
     isConnecting,
     isConnected: !!user, // User is considered connected if they're logged in, wallet is optional
+    walletConnected: !!account,
     connect,
     login,
     disconnect,
-    updateUser
+    updateUser,
+    reconnectWallet
   };
 
   return <Web3Context.Provider value={value}>{children}</Web3Context.Provider>;

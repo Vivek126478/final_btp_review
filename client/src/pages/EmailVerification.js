@@ -42,7 +42,7 @@ const EmailVerification = () => {
         // Email exists, show button to navigate to login instead of auto-redirect
         setEmailExists(true);
         localStorage.setItem('loginEmail', email);
-        toast.info('Email already registered. Please sign in.');
+        toast('Email already registered. Please sign in.', { icon: 'ℹ️' });
         setLoading(false);
         return;
       }

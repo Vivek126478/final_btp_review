@@ -950,7 +950,7 @@ exports.getRideById = async (req, res) => {
             {
               model: User,
               as: 'rider',
-              attributes: ['id', 'username', 'email', 'profilePicture', 'phoneNumber']
+              attributes: ['id', 'username', 'email', 'profilePicture', 'phoneNumber', 'walletAddress']
             }
           ]
         }

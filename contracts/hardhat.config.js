@@ -22,6 +22,11 @@ module.exports = {
       chainId: 1337,
       blockGasLimit: 15_000_000,
       initialBaseFeePerGas: 1
+    },
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com",
+      chainId: 11155111,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : []
     }
   },
   paths: {

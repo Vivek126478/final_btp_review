@@ -6,11 +6,17 @@ async function main() {
   console.log("Starting deployment...\n");
 
   const provider = hre.ethers.provider;
-  const latestBlock = await provider.getBlock('latest');
-  const blockGasLimit = latestBlock?.gasLimit ? Number(latestBlock.gasLimit) : 0;
-  const maxAllowedGasLimit = 15_000_000;
-  const deployGasLimit = blockGasLimit > 0 ? Math.min(blockGasLimit, maxAllowedGasLimit) : maxAllowedGasLimit;
-  const deployOverrides = { gasLimit: deployGasLimit };
+  const networkName = hre.network.name;
+  const isLocal = networkName === 'localhost' || networkName === 'hardhat';
+
+  let deployOverrides = {};
+  if (isLocal) {
+    const latestBlock = await provider.getBlock('latest');
+    const blockGasLimit = latestBlock?.gasLimit ? Number(latestBlock.gasLimit) : 0;
+    const maxAllowedGasLimit = 15_000_000;
+    deployOverrides = { gasLimit: blockGasLimit > 0 ? Math.min(blockGasLimit, maxAllowedGasLimit) : maxAllowedGasLimit };
+  }
+  // On testnets/mainnet, let ethers auto-estimate gas
 
   // Deploy UserIdentity Contract
   console.log("Deploying UserIdentity Contract...");
@@ -176,21 +182,23 @@ async function main() {
       path.join(clientContractsDir, "contract-addresses.json"),
       JSON.stringify(contractAddresses, null, 2)
     );
-    // Copy ZKPDriverVerifier ABI to client
-    fs.writeFileSync(
-      path.join(clientContractsDir, "ZKPDriverVerifier.json"),
-      JSON.stringify(zkpDriverVerifierArtifact.abi, null, 2)
-    );
-    // Copy MerkleAuditTrail ABI to client
-    fs.writeFileSync(
-      path.join(clientContractsDir, "MerkleAuditTrail.json"),
-      JSON.stringify(merkleAuditTrailArtifact.abi, null, 2)
-    );
-    // Copy ShamirSOSVault ABI to client
-    fs.writeFileSync(
-      path.join(clientContractsDir, "ShamirSOSVault.json"),
-      JSON.stringify(shamirSOSVaultArtifact.abi, null, 2)
-    );
+    // Copy all contract ABIs to client
+    const clientAbis = {
+      'RideContract.json': rideContractArtifact.abi,
+      'UserIdentity.json': userIdentityArtifact.abi,
+      'Reputation.json': reputationArtifact.abi,
+      'DPoSGovernance.json': dposGovernanceArtifact.abi,
+      'DisputeResolution.json': disputeResolutionArtifact.abi,
+      'ZKPDriverVerifier.json': zkpDriverVerifierArtifact.abi,
+      'MerkleAuditTrail.json': merkleAuditTrailArtifact.abi,
+      'ShamirSOSVault.json': shamirSOSVaultArtifact.abi,
+    };
+    for (const [filename, abi] of Object.entries(clientAbis)) {
+      fs.writeFileSync(
+        path.join(clientContractsDir, filename),
+        JSON.stringify(abi, null, 2)
+      );
+    }
     console.log("✅ Contract addresses and ABIs copied to client/src/contracts/");
   }
 

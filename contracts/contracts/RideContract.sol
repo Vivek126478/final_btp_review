@@ -227,6 +227,41 @@ contract RideContract {
         return rideCounter;
     }
 
+    // --- Cryptographic Boarding Pass Verification ---
+    // The driver calls this to verify a rider's boarding signature on-chain.
+    // The rider signs keccak256(abi.encodePacked(rideId, driver, "BOARDING_PASS")) off-chain,
+    // then the driver submits that signature here to mark the rider as boarded.
+    function boardRider(
+        uint256 _rideId,
+        address _rider,
+        bytes memory _signature
+    ) public rideExists(_rideId) onlyDriver(_rideId) {
+        Ride storage ride = rides[_rideId];
+        require(ride.status == RideStatus.ACTIVE, "Ride is not active");
+
+        // Reconstruct the message the rider was expected to sign
+        bytes32 messageHash = keccak256(abi.encodePacked(_rideId, ride.driver, "BOARDING_PASS"));
+        bytes32 ethSignedHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
+
+        // Recover signer and verify it matches the claimed rider
+        address recovered = ECDSA.recover(ethSignedHash, _signature);
+        require(recovered == _rider, "Invalid boarding signature");
+
+        // Mark the rider as boarded
+        RideParticipant[] storage participants = rideParticipants[_rideId];
+        bool found = false;
+        for (uint256 i = 0; i < participants.length; i++) {
+            if (participants[i].rider == _rider && !participants[i].hasLeft && !participants[i].hasBoarded) {
+                participants[i].hasBoarded = true;
+                found = true;
+                break;
+            }
+        }
+        require(found, "Rider is not an active participant");
+
+        emit RiderBoarded(_rideId, _rider, block.timestamp);
+    }
+
     // --- Web3 Ride Agreement Integrity ---
     // The Host anchors the initial ride agreement hash to prevent bait-and switch.
     function anchorRideAgreement(uint256 _rideId, bytes32 _agreementHash) public rideExists(_rideId) onlyDriver(_rideId) {

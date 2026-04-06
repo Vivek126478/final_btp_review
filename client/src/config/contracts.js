@@ -10,9 +10,10 @@ export const CONTRACT_ADDRESSES = {
 };
 
 export const BLOCKCHAIN_CONFIG = {
-  rpcUrl: process.env.REACT_APP_RPC_URL || 'http://127.0.0.1:8545',
-  chainId: parseInt(process.env.REACT_APP_CHAIN_ID || '1337'),
-  chainName: process.env.REACT_APP_CHAIN_NAME || 'Localhost'
+  rpcUrl: process.env.REACT_APP_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com',
+  chainId: parseInt(process.env.REACT_APP_CHAIN_ID || '11155111'),
+  chainName: process.env.REACT_APP_CHAIN_NAME || 'Sepolia',
+  blockExplorerUrl: 'https://sepolia.etherscan.io'
 };
 
 export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
