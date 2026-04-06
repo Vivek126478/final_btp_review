@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Decentralized Cab-Sharing System Using Blockchain Technology — Final Review</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --surface2: #eef0f6;
+    --border: #d8dbe6;
+    --text: #1a1a2e;
+    --muted: #555670;
+    --accent: #6c5ce7;
+    --accent2: #5a4bd1;
+    --green: #00a89d;
+    --orange: #e09400;
+    --red: #e04545;
+    --blue: #3a8fd9;
+    --pink: #d9568c;
+    --gradient1: linear-gradient(135deg, #6c5ce7, #8b7cf6);
+    --gradient2: linear-gradient(135deg, #00a89d, #6c5ce7);
+    --gradient3: linear-gradient(135deg, #e09400, #d05a3a);
+    --gradient4: linear-gradient(135deg, #d9568c, #8b7cf6);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  /* ── Slide Container ── */
+  .slides-wrapper {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .slide {
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    position: relative;
+    overflow-y: auto;
+  }
+  .slide.active { display: flex; }
+
+  /* ── Navigation ── */
+  .nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 32px; z-index: 100;
+  }
+  .nav-bar button {
+    background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 20px; font-size: 14px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-weight: 500;
+    transition: all 0.2s;
+  }
+  .nav-bar button:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .nav-bar .slide-counter {
+    font-size: 13px; color: var(--muted); font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .progress-bar {
+    position: fixed; top: 0; left: 0; height: 3px; z-index: 101;
+    background: var(--gradient1); transition: width 0.3s ease;
+  }
+
+  /* ── Typography ── */
+  .slide-title {
+    font-size: 38px; font-weight: 800; margin-bottom: 32px;
+    background: var(--gradient1); -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent; line-height: 1.2;
+    text-align: center;
+  }
+  .slide-subtitle {
+    font-size: 20px; color: var(--muted); font-weight: 400;
+    margin-bottom: 40px; text-align: center; max-width: 800px;
+  }
+  .section-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--accent2);
+    margin-bottom: 12px; text-align: center;
+  }
+  h3 {
+    font-size: 22px; font-weight: 700; margin-bottom: 16px; color: var(--text);
+  }
+  h4 {
+    font-size: 16px; font-weight: 600; color: var(--accent2); margin-bottom: 8px;
+  }
+
+  /* ── Content Layouts ── */
+  .content-area {
+    width: 100%; max-width: 1200px; text-align: left;
+  }
+  .two-col {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+    width: 100%; max-width: 1200px;
+  }
+  .three-col {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;
+    width: 100%; max-width: 1200px;
+  }
+  .four-col {
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px;
+    width: 100%; max-width: 1200px;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .card-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin-bottom: 16px;
+  }
+  .card p, li {
+    font-size: 15px; line-height: 1.7; color: var(--muted);
+  }
+  .card ul { padding-left: 18px; }
+  .card ul li { margin-bottom: 6px; }
+
+  /* ── Tags / Badges ── */
+  .badge {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  }
+  .badge-purple { background: rgba(108,92,231,0.12); color: var(--accent2); }
+  .badge-green { background: rgba(0,168,157,0.12); color: var(--green); }
+  .badge-orange { background: rgba(224,148,0,0.12); color: var(--orange); }
+  .badge-red { background: rgba(224,69,69,0.12); color: var(--red); }
+  .badge-blue { background: rgba(58,143,217,0.12); color: var(--blue); }
+  .badge-pink { background: rgba(217,86,140,0.12); color: var(--pink); }
+
+  /* ── Code Blocks ── */
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #1a6b5a;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  /* ── Tables ── */
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    text-align: left; padding: 12px 16px;
+    background: var(--surface2); color: var(--accent2);
+    font-weight: 600; border-bottom: 2px solid var(--border);
+    font-size: 13px; letter-spacing: 0.5px;
+  }
+  td {
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    color: var(--muted);
+  }
+  tr:hover td { background: rgba(108,92,231,0.07); }
+
+  /* ── Flow Diagrams ── */
+  .flow-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 24px; text-align: center;
+    font-size: 14px; color: var(--text); font-weight: 500;
+    position: relative;
+  }
+  .flow-arrow {
+    text-align: center; font-size: 24px; color: var(--accent2);
+    padding: 4px 0;
+  }
+  .flow-horizontal {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    justify-content: center;
+  }
+  .flow-horizontal .flow-arrow { font-size: 20px; }
+
+  /* ── Image Placeholders ── */
+  .img-placeholder {
+    background: var(--surface2);
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 240px; gap: 12px;
+    padding: 24px;
+  }
+  .img-placeholder .icon { font-size: 40px; opacity: 0.5; }
+  .img-placeholder .label {
+    font-size: 14px; color: var(--muted); text-align: center;
+    max-width: 280px;
+  }
+
+  /* ── Highlight Numbers ── */
+  .stat-number {
+    font-size: 48px; font-weight: 900; line-height: 1;
+    background: var(--gradient1); -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat-label {
+    font-size: 14px; color: var(--muted); margin-top: 8px; font-weight: 500;
+  }
+
+  /* ── Layer Stack ── */
+  .layer {
+    width: 100%; max-width: 900px;
+    padding: 18px 28px; border-radius: 12px;
+    margin-bottom: 8px; font-weight: 600;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 15px;
+  }
+  .layer .layer-desc { font-weight: 400; font-size: 13px; color: rgba(0,0,0,0.55); }
+
+  /* ── Title Slide Specific ── */
+  .title-main {
+    font-size: 52px; font-weight: 900; text-align: center;
+    background: var(--gradient1); -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent; line-height: 1.15;
+    margin-bottom: 24px; max-width: 900px;
+  }
+  .title-tagline {
+    font-size: 20px; color: var(--muted); text-align: center;
+    max-width: 700px; line-height: 1.6; margin-bottom: 48px;
+  }
+  .title-meta {
+    display: flex; gap: 48px; flex-wrap: wrap; justify-content: center;
+    font-size: 14px; color: var(--muted);
+  }
+  .title-meta span { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .title-meta .meta-label { font-size: 11px; color: var(--accent2); text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
+
+  /* ── Motivation bullet ── */
+  .motivation-item {
+    display: flex; gap: 16px; align-items: flex-start;
+    margin-bottom: 20px;
+  }
+  .motivation-item .num {
+    min-width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700;
+  }
+  .motivation-item .text { font-size: 15px; color: var(--muted); line-height: 1.7; }
+  .motivation-item .text strong { color: var(--text); }
+
+  /* ── Reference list ── */
+  .ref-list { list-style: none; padding: 0; }
+  .ref-list li {
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    font-size: 13px; color: var(--muted); line-height: 1.6;
+  }
+  .ref-list li span.ref-num {
+    display: inline-block; width: 28px; font-weight: 700; color: var(--accent2);
+  }
+
+  /* ── Comparison table highlight ── */
+  .highlight-row td { color: var(--green); font-weight: 600; }
+
+  /* scrollbar */
+  .slide::-webkit-scrollbar { width: 6px; }
+  .slide::-webkit-scrollbar-track { background: transparent; }
+  .slide::-webkit-scrollbar-thumb { background: #c0c3d0; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<div class="slides-wrapper" id="slidesWrapper">
+
+<!-- ============================================================ -->
+<!-- SLIDE 1: TITLE -->
+<!-- ============================================================ -->
+<div class="slide active" id="slide-1">
+  <div class="section-label">B.Tech Final Year Project — Final Review</div>
+  <div class="title-main">Decentralized Cab-Sharing System Using Blockchain Technology</div>
+  <div class="title-tagline">
+    A privacy-preserving, blockchain-secured peer-to-peer carpooling platform integrating
+    7 cryptographic primitives for trust, transparency, and safety in campus ride-sharing.
+  </div>
+  <div class="title-meta">
+    <span>
+      <span class="meta-label">Team</span>
+      Sarthak Gupta (2022BCY0054)<br>
+      G. Sai Vivek Reddy (2022BCY0028)<br>
+      Hisham Abdul Asis (2022BCY0001)
+    </span>
+    <span>
+      <span class="meta-label">Guide</span>
+      Sreelakshmy I J
+    </span>
+    <span>
+      <span class="meta-label">Department</span>
+      B.Tech CSE<br>(Cyber Security)
+    </span>
+    <span>
+      <span class="meta-label">Institution</span>
+      IIIT Kottayam
+    </span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 2: AGENDA -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-2">
+  <div class="section-label">Overview</div>
+  <div class="slide-title">Presentation Agenda</div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Part I — Foundation</h3>
+      <ul>
+        <li>Introduction &amp; Motivation</li>
+        <li>Problem Statement</li>
+        <li>Literature Survey</li>
+        <li>Objectives &amp; Scope</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Part II — Design</h3>
+      <ul>
+        <li>System Architecture (5-Layer)</li>
+        <li>Blockchain Security Layer</li>
+        <li>Cryptographic Primitives Deep Dive</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Part III — Implementation</h3>
+      <ul>
+        <li>Technology Stack</li>
+        <li>Smart Contract Design</li>
+        <li>Experimental Setup &amp; Results</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Part IV — Outcomes</h3>
+      <ul>
+        <li>Live Demonstration</li>
+        <li>Security Analysis</li>
+        <li>Conclusion &amp; Future Work</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 3: INTRODUCTION -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-3">
+  <div class="section-label">Introduction</div>
+  <div class="slide-title">The Ride-Sharing Trust Problem</div>
+  <div class="slide-subtitle">
+    Centralized cab-sharing platforms rely on a single point of trust — the platform operator — to mediate identity, disputes, and data privacy.
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-icon" style="background:rgba(255,107,107,0.15);">⚠️</div>
+      <h3>Risks in Centralized Systems</h3>
+      <ul>
+        <li><strong>Single point of failure</strong> — server compromise leaks all user data</li>
+        <li><strong>Opaque dispute resolution</strong> — users cannot verify fairness</li>
+        <li><strong>Identity manipulation</strong> — fake accounts, unverified drivers</li>
+        <li><strong>Data monetization</strong> — location history sold to third parties</li>
+        <li><strong>No accountability audit</strong> — ride records can be silently modified</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:rgba(0,206,201,0.15);">🔗</div>
+      <h3>What Blockchain Brings</h3>
+      <ul>
+        <li><strong>Decentralized trust</strong> — no single authority controls outcomes</li>
+        <li><strong>Immutable records</strong> — tamper-evident ride lifecycle events</li>
+        <li><strong>Transparent governance</strong> — on-chain voting for disputes</li>
+        <li><strong>Privacy by design</strong> — encrypt-first, reveal-selectively</li>
+        <li><strong>Cryptographic verification</strong> — prove facts without exposing secrets</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 4: PROBLEM STATEMENT -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-4">
+  <div class="section-label">Problem Statement</div>
+  <div class="slide-title">Research Questions &amp; Objectives</div>
+  <div class="content-area">
+    <div class="card" style="margin-bottom:24px;">
+      <h3>Core Problem</h3>
+      <p style="font-size:17px;color:var(--text);line-height:1.8;">
+        How can we design a peer-to-peer carpooling system for a campus environment that provides
+        <strong>verifiable trust</strong>, <strong>privacy-preserving identity management</strong>,
+        <strong>tamper-evident ride operations</strong>, and <strong>decentralized dispute resolution</strong>
+        — without relying on a centralized intermediary?
+      </p>
+    </div>
+    <div class="three-col">
+      <div class="card">
+        <h4>Objective 1</h4>
+        <p>Design a hybrid on-chain/off-chain architecture ensuring <strong>integrity and privacy</strong> of ride data</p>
+      </div>
+      <div class="card">
+        <h4>Objective 2</h4>
+        <p>Implement <strong>7 cryptographic mechanisms</strong> (SBT, ZKP, ECDSA, DPoS, Merkle Trees, CP-ABE, SSS) in a practical application</p>
+      </div>
+      <div class="card">
+        <h4>Objective 3</h4>
+        <p>Build a <strong>functional prototype</strong> with end-to-end ride lifecycle management, safety features, and governance</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 5: LITERATURE SURVEY -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-5">
+  <div class="section-label">Literature Survey</div>
+  <div class="slide-title">Related Work &amp; Research Gap</div>
+  <div class="content-area">
+    <table>
+      <thead>
+        <tr>
+          <th>Study / Platform</th>
+          <th>Blockchain</th>
+          <th>Privacy</th>
+          <th>Governance</th>
+          <th>Audit Trail</th>
+          <th>Secret Sharing</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Uber / Ola (Centralized)</td>
+          <td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td>
+        </tr>
+        <tr>
+          <td>Li et al. (2018) — CRide</td>
+          <td>✓ Ethereum</td><td>Partial</td><td>✗</td><td>✗</td><td>✗</td>
+        </tr>
+        <tr>
+          <td>Baza et al. (2019) — B-Ride</td>
+          <td>✓ Smart Contracts</td><td>✓ Blind Sig</td><td>✗</td><td>✗</td><td>✗</td>
+        </tr>
+        <tr>
+          <td>Blockchain-IoV (2021)</td>
+          <td>✓ Hyperledger</td><td>Partial</td><td>Partial</td><td>✗</td><td>✗</td>
+        </tr>
+        <tr class="highlight-row">
+          <td><strong>Our System (D-CARPOOL)</strong></td>
+          <td><strong>✓ 8 Contracts</strong></td>
+          <td><strong>✓ ZKP + CP-ABE</strong></td>
+          <td><strong>✓ DPoS</strong></td>
+          <td><strong>✓ Merkle</strong></td>
+          <td><strong>✓ Shamir SSS</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:24px;">
+      <div class="card">
+        <h4>Research Gap Identified</h4>
+        <p>Existing blockchain ride-sharing proposals focus on <strong>one or two security mechanisms</strong> in isolation.
+        No prior work integrates <strong>Soulbound Tokens, Zero-Knowledge Proofs, ECDSA boarding verification,
+        DPoS governance, Merkle audit trails, CP-ABE encryption, and Shamir's Secret Sharing</strong>
+        within a single cohesive platform.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 6: SIGNIFICANCE -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-6">
+  <div class="section-label">Significance</div>
+  <div class="slide-title">Why This Research Matters</div>
+  <div class="three-col">
+    <div class="card">
+      <div class="card-icon" style="background:rgba(108,92,231,0.15);">🎓</div>
+      <h3>Academic Contribution</h3>
+      <ul>
+        <li>First <strong>comprehensive integration</strong> of 7 cryptographic primitives in ride-sharing</li>
+        <li>Demonstrates practical application of <strong>information-theoretic security</strong> (SSS) in emergency response</li>
+        <li>Novel use of <strong>CP-ABE for ride-scoped access control</strong></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:rgba(0,206,201,0.15);">🏫</div>
+      <h3>Campus Relevance</h3>
+      <ul>
+        <li>Designed for <strong>verified academic communities</strong> (SBT identity tied to @iiitkottayam.ac.in)</li>
+        <li>Reduces dependency on informal, unaccountable ride-sharing groups</li>
+        <li>Built-in <strong>SOS emergency system</strong> with threshold-protected data</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:rgba(253,203,110,0.15);">🔐</div>
+      <h3>Cyber Security Focus</h3>
+      <ul>
+        <li>Addresses <strong>OWASP Top 10</strong> at application layer</li>
+        <li>Blockchain layer for <strong>non-repudiation</strong> and <strong>tamper-evidence</strong></li>
+        <li>Defense-in-depth: 7 independent security layers</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 7: SYSTEM ARCHITECTURE -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-7">
+  <div class="section-label">Architecture</div>
+  <div class="slide-title">5-Layer System Architecture</div>
+  <div style="width:100%;max-width:900px;">
+    <div class="layer" style="background:linear-gradient(90deg,rgba(108,92,231,0.3),rgba(108,92,231,0.1));">
+      <span>🖥️ &nbsp;Layer 1 — Frontend (React + Ethers.js)</span>
+      <span class="layer-desc">UI, MetaMask wallet integration, contract interaction</span>
+    </div>
+    <div class="layer" style="background:linear-gradient(90deg,rgba(0,206,201,0.3),rgba(0,206,201,0.1));">
+      <span>⚙️ &nbsp;Layer 2 — Backend API (Node.js + Express)</span>
+      <span class="layer-desc">REST APIs, business logic, RBAC, blockchain anchoring</span>
+    </div>
+    <div class="layer" style="background:linear-gradient(90deg,rgba(253,203,110,0.3),rgba(253,203,110,0.1));">
+      <span>🗄️ &nbsp;Layer 3 — Database (MySQL + Sequelize)</span>
+      <span class="layer-desc">Operational data, user profiles, ride state, ratings</span>
+    </div>
+    <div class="layer" style="background:linear-gradient(90deg,rgba(255,107,107,0.3),rgba(255,107,107,0.1));">
+      <span>⛓️ &nbsp;Layer 4 — Blockchain (Solidity + Ethereum/Sepolia)</span>
+      <span class="layer-desc">8 smart contracts, immutable event logs, on-chain governance</span>
+    </div>
+    <div class="layer" style="background:linear-gradient(90deg,rgba(253,121,168,0.3),rgba(253,121,168,0.1));">
+      <span>🔐 &nbsp;Layer 5 — Cryptographic Services</span>
+      <span class="layer-desc">CP-ABE (Flask), Shamir SSS, Merkle Trees, ECDSA, ZKP</span>
+    </div>
+  </div>
+  <div style="margin-top:24px;text-align:center;">
+    <span class="badge badge-purple">Hybrid On-Chain / Off-Chain Design</span>
+    <span style="margin:0 8px;color:var(--muted);">•</span>
+    <span class="badge badge-green">Best-Effort Blockchain Anchoring</span>
+    <span style="margin:0 8px;color:var(--muted);">•</span>
+    <span class="badge badge-orange">Privacy by Default</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 8: ARCHITECTURE DIAGRAM -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-8">
+  <div class="section-label">Architecture</div>
+  <div class="slide-title">End-to-End Data Flow</div>
+  <div class="content-area" style="max-width:1000px;">
+    <div class="flow-horizontal" style="margin-bottom:20px;">
+      <div class="flow-box" style="min-width:140px;">
+        <div style="font-size:24px;">👤</div>
+        <div>User Browser</div>
+        <div style="font-size:11px;color:var(--muted);">React App</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="min-width:140px;">
+        <div style="font-size:24px;">🦊</div>
+        <div>MetaMask</div>
+        <div style="font-size:11px;color:var(--muted);">Wallet + Signing</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="min-width:140px;">
+        <div style="font-size:24px;">⚙️</div>
+        <div>Express API</div>
+        <div style="font-size:11px;color:var(--muted);">Port 5001</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="min-width:140px;">
+        <div style="font-size:24px;">🗄️</div>
+        <div>MySQL DB</div>
+        <div style="font-size:11px;color:var(--muted);">Sequelize ORM</div>
+      </div>
+    </div>
+    <div class="flow-horizontal">
+      <div class="flow-box" style="min-width:140px;">
+        <div style="font-size:24px;">🐍</div>
+        <div>CP-ABE Service</div>
+        <div style="font-size:11px;color:var(--muted);">Flask / Port 7001</div>
+      </div>
+      <div class="flow-arrow">↔</div>
+      <div class="flow-box" style="min-width:200px;border-color:var(--accent);">
+        <div style="font-size:24px;">⛓️</div>
+        <div><strong>Ethereum Blockchain</strong></div>
+        <div style="font-size:11px;color:var(--green);">Sepolia Testnet / 8 Contracts</div>
+      </div>
+      <div class="flow-arrow">↔</div>
+      <div class="flow-box" style="min-width:140px;">
+        <div style="font-size:24px;">📦</div>
+        <div>IPFS (Pinata)</div>
+        <div style="font-size:11px;color:var(--muted);">Document Storage</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:28px;">
+      <h4>Hybrid Design Rationale</h4>
+      <p><strong>Off-chain (MySQL)</strong>: Full application state for performance, search, and privacy — avoids storing PII on a public ledger.<br>
+      <strong>On-chain (Blockchain)</strong>: Tamper-evident hashes, ride lifecycle events, dispute anchoring, and governance — provides integrity proofs.
+      Blockchain calls are <strong>best-effort</strong>: if the chain is temporarily unavailable, the app continues functioning and retries when possible.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 9: SECURITY ARCHITECTURE OVERVIEW -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-9">
+  <div class="section-label">Security Architecture</div>
+  <div class="slide-title">7 Cryptographic Security Layers</div>
+  <div class="slide-subtitle">Each layer independently addresses a specific threat vector in peer-to-peer ride-sharing</div>
+  <div class="four-col">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">🆔</div>
+      <h4>SBT Identity</h4>
+      <span class="badge badge-purple">Sybil Resistance</span>
+      <p style="margin-top:8px;font-size:13px;">Non-transferable tokens for verified academic identity</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">🔏</div>
+      <h4>Zero-Knowledge Proofs</h4>
+      <span class="badge badge-green">Privacy</span>
+      <p style="margin-top:8px;font-size:13px;">Verify driver credentials without revealing documents</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">✍️</div>
+      <h4>ECDSA Signatures</h4>
+      <span class="badge badge-blue">Authentication</span>
+      <p style="margin-top:8px;font-size:13px;">Cryptographic boarding pass verification</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">🗳️</div>
+      <h4>DPoS Governance</h4>
+      <span class="badge badge-orange">Decentralization</span>
+      <p style="margin-top:8px;font-size:13px;">Stake-weighted delegate election for dispute voting</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">🌳</div>
+      <h4>Merkle Trees</h4>
+      <span class="badge badge-red">Integrity</span>
+      <p style="margin-top:8px;font-size:13px;">O(log n) ride history verification via root anchoring</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">🔐</div>
+      <h4>CP-ABE Encryption</h4>
+      <span class="badge badge-pink">Access Control</span>
+      <p style="margin-top:8px;font-size:13px;">Policy-based encryption: "host OR accepted-rider"</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">🔑</div>
+      <h4>Shamir's SSS</h4>
+      <span class="badge badge-green">Threshold Security</span>
+      <p style="margin-top:8px;font-size:13px;">K-of-N emergency data reconstruction</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">#️⃣</div>
+      <h4>Hash Anchoring</h4>
+      <span class="badge badge-purple">Non-Repudiation</span>
+      <p style="margin-top:8px;font-size:13px;">Ride agreement hashes stored immutably on-chain</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 10: SBT SOULBOUND TOKENS -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-10">
+  <div class="section-label">Cryptographic Primitive 1</div>
+  <div class="slide-title">Soulbound Tokens (SBT) — Academic Identity</div>
+  <div class="two-col">
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>What are Soulbound Tokens?</h4>
+        <p>Non-transferable NFTs proposed by <strong>Vitalik Buterin (2022)</strong>. Once minted to a wallet, they cannot be sold, traded, or moved — they are permanently <em>bound to the soul</em> (wallet address).</p>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>How We Use SBT</h4>
+        <ul>
+          <li>User registers with <strong>@iiitkottayam.ac.in</strong> email</li>
+          <li>Email verified via OTP (Resend API)</li>
+          <li>On verification, admin mints SBT via <code>UserIdentity.mintStudentSBT()</code></li>
+          <li>SBT proves the user is a verified IIIT student</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Security Properties</h4>
+        <ul>
+          <li><strong>Sybil Resistance</strong> — 1 person = 1 verified SBT</li>
+          <li><strong>Non-Transferable</strong> — prevents account selling</li>
+          <li><strong>Privacy Preserving</strong> — only stores verification status, not PII</li>
+          <li><strong>Permanently On-Chain</strong> — academic credential persists</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="code-block" style="margin-bottom:16px;">// UserIdentity.sol — SBT Minting
+mapping(address => bool) public hasStudentSBT;
+
+function mintStudentSBT(address student)
+    external
+{
+    require(msg.sender == admin,
+            "Only admin");
+    require(!hasStudentSBT[student],
+            "Already minted");
+
+    hasStudentSBT[student] = true;
+    emit SoulboundTokenMinted(
+        student,
+        block.timestamp
+    );
+}
+
+// Non-transferable by design:
+// No transfer() function exists</div>
+      <div class="card">
+        <h4>Contract: UserIdentity.sol</h4>
+        <p>~120 LOC • Stores user profiles (username, email, IPFS hash) + SBT status • <strong>5 events</strong> for complete audit trail</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 11: ZKP -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-11">
+  <div class="section-label">Cryptographic Primitive 2</div>
+  <div class="slide-title">Zero-Knowledge Proofs — Driver Verification</div>
+  <div class="two-col">
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>The Zero-Knowledge Paradigm</h4>
+        <p>Introduced by <strong>Goldwasser, Micali &amp; Rackoff (1985)</strong>. A ZKP allows a prover to convince a verifier that a statement is true <strong>without revealing any information beyond the validity of the statement</strong>.</p>
+        <p style="margin-top:8px;">Three properties: <strong>Completeness</strong>, <strong>Soundness</strong>, <strong>Zero-Knowledge</strong>.</p>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>Application: Driver Credential Verification</h4>
+        <ul>
+          <li>Driver has private inputs: license number, expiry date, registration</li>
+          <li>Generates ZK proof: <em>"I have a valid license"</em></li>
+          <li>Contract verifies proof on-chain</li>
+          <li><strong>License number never revealed</strong> to platform or riders</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Smart Contract</h4>
+        <p><strong>ZKPDriverVerifier.sol</strong> (~30 LOC) — Mock verifier. Production would use Groth16 or PLONK proof systems. Stores <code>isRideZKVerified[rideId]</code> flag on successful verification.</p>
+      </div>
+    </div>
+    <div>
+      <div style="padding:20px;">
+        <div class="flow-box" style="margin-bottom:8px;border-color:var(--green);">
+          <strong>Prover (Driver)</strong><br>
+          <span style="font-size:13px;color:var(--muted);">Private: License #, Expiry, Registration</span>
+        </div>
+        <div class="flow-arrow">↓ generates proof</div>
+        <div class="flow-box" style="margin-bottom:8px;">
+          <strong>ZK Proof + Public Signals</strong><br>
+          <span style="font-size:13px;color:var(--muted);">proof = ZK.prove(private, statement)</span>
+        </div>
+        <div class="flow-arrow">↓ submits to chain</div>
+        <div class="flow-box" style="margin-bottom:8px;border-color:var(--accent);">
+          <strong>ZKPDriverVerifier Contract</strong><br>
+          <span style="font-size:13px;color:var(--muted);">verifyDriverZKProof(rideId, proof, signal)</span>
+        </div>
+        <div class="flow-arrow">↓ result</div>
+        <div class="flow-box" style="border-color:var(--green);">
+          <strong>✓ Driver Verified</strong><br>
+          <span style="font-size:13px;color:var(--green);">Credentials NEVER revealed</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 12: ECDSA BOARDING -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-12">
+  <div class="section-label">Cryptographic Primitive 3</div>
+  <div class="slide-title">ECDSA Signatures — Cryptographic Boarding Pass</div>
+  <div class="two-col">
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>Boarding Verification Problem</h4>
+        <p>How does a driver <strong>cryptographically verify</strong> that the correct passenger is boarding, without relying on a centralized server to mediate?</p>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>Our ECDSA Solution</h4>
+        <ul>
+          <li><strong>Rider</strong> signs message: <code>keccak256(rideId, driverAddress, "BOARDING_PASS")</code></li>
+          <li>Rider shares the <strong>0x-prefixed signature</strong> with driver</li>
+          <li>Driver submits signature to <code>boardRider()</code> on-chain</li>
+          <li>Contract <strong>recovers</strong> signer via <code>ECDSA.recover()</code></li>
+          <li>If recovered address matches rider's wallet → <strong>boarding confirmed</strong></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Uses OpenZeppelin</h4>
+        <p><code>ECDSA.sol</code> + <code>MessageHashUtils.sol</code> for secure signature recovery. Prevents signature malleability attacks.</p>
+      </div>
+    </div>
+    <div>
+      <div class="code-block">// RideContract.sol — boardRider()
+function boardRider(
+    uint256 rideId,
+    address rider,
+    bytes memory signature
+) external rideExists(rideId)
+         onlyDriver(rideId) {
+
+    // Reconstruct expected message
+    bytes32 msgHash = keccak256(
+        abi.encodePacked(
+            rideId,
+            msg.sender,
+            "BOARDING_PASS"
+        )
+    );
+
+    // Convert to Ethereum signed hash
+    bytes32 ethHash = MessageHashUtils
+        .toEthSignedMessageHash(msgHash);
+
+    // Recover signer from signature
+    address signer = ECDSA.recover(
+        ethHash, signature
+    );
+
+    // Verify rider is the actual signer
+    require(signer == rider,
+        "Invalid boarding signature");
+
+    // Mark rider as boarded
+    emit RiderBoarded(rideId, rider);
+}</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 13: DPoS GOVERNANCE -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-13">
+  <div class="section-label">Cryptographic Primitive 4</div>
+  <div class="slide-title">DPoS Governance — Decentralized Dispute Resolution</div>
+  <div class="two-col">
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>Delegated Proof of Stake (DPoS)</h4>
+        <p>Proposed by <strong>Daniel Larimer (2014)</strong>. Uses a two-stage process: stakeholders <strong>elect a validation committee</strong> by voting proportional to stakes, then the committee acts on behalf of the community. Used in EOS, Lisk, Tron.</p>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>Our Implementation</h4>
+        <ul>
+          <li><strong>Candidate Registration</strong>: Anyone stakes ≥ 0.01 ETH to become a candidate</li>
+          <li><strong>Voting</strong>: Users vote (payable) for candidates they trust</li>
+          <li><strong>Delegate Selection</strong>: Top 5 candidates by total votes = active delegates</li>
+          <li><strong>Dispute Voting</strong>: Only delegates can vote Approve/Reject on disputes</li>
+          <li><strong>Quorum</strong>: 3 out of 5 delegates needed for valid outcome</li>
+          <li><strong>Time-Bound</strong>: 24h voting period, auto-finalize on expiry</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>Dispute Lifecycle</h4>
+        <div class="flow-box" style="margin-bottom:6px;">1. User files complaint with evidence</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-box" style="margin-bottom:6px;">2. <code>openDispute(rideId, evidenceHash)</code> on-chain</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-box" style="margin-bottom:6px;">3. Delegates review &amp; vote (24h window)</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-box" style="margin-bottom:6px;">4. Quorum reached → Auto-finalize</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-box">5. Outcome enforced (on-chain record)</div>
+      </div>
+      <div class="card">
+        <h4>Two Smart Contracts</h4>
+        <p><strong>DPoSGovernance.sol</strong> (~160 LOC): Candidate registry, voting/unvoting, top-N delegate computation.<br>
+        <strong>DisputeResolution.sol</strong> (~115 LOC): Cross-contract <code>onlyDelegate</code> modifier, quorum logic, time-bound finalization.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 14: MERKLE TREE -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-14">
+  <div class="section-label">Cryptographic Primitive 5</div>
+  <div class="slide-title">Merkle Trees — Verifiable Audit Trail</div>
+  <div class="two-col">
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>Merkle Trees in Blockchain</h4>
+        <p>Invented by <strong>Ralph Merkle (1979)</strong>. A binary hash tree where each leaf is the hash of a data block. The root hash is a fixed-size commitment to the <strong>entire dataset</strong>. Used in Bitcoin, Ethereum, Git, IPFS, and Certificate Transparency.</p>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>Our Implementation</h4>
+        <ul>
+          <li><strong>Batch anchoring</strong>: Admin batches N rides → builds Merkle tree → anchors root on-chain</li>
+          <li><strong>Verification</strong>: Prove any single ride existed with O(log n) proof</li>
+          <li><strong>Storage efficient</strong>: Only 32-byte root stored on-chain per batch</li>
+          <li><strong>IPFS metadata</strong>: Full batch data stored on IPFS, root on-chain</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Complexity Analysis</h4>
+        <table>
+          <tr><th>Operation</th><th>Complexity</th></tr>
+          <tr><td>Anchor root (admin)</td><td>O(1) on-chain</td></tr>
+          <tr><td>Verify 1 ride</td><td>O(log n) hashes</td></tr>
+          <tr><td>Storage per batch</td><td>32 bytes</td></tr>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="code-block" style="margin-bottom:16px;">        Root Hash (on-chain)
+              /\
+             /  \
+        Hash(AB)    Hash(CD)
+          /\          /\
+         /  \        /  \
+    Hash(A) Hash(B) Hash(C) Hash(D)
+       |       |       |       |
+    Ride 1  Ride 2  Ride 3  Ride 4
+
+Proof for Ride 2:
+  [Hash(A), Hash(CD)]
+
+Verify:
+  1. hash(Ride2) → Hash(B)
+  2. hash(Hash(A) + Hash(B)) → Hash(AB)
+  3. hash(Hash(AB) + Hash(CD)) → Root
+  4. Root === storedRoot? ✓ Valid</div>
+      <div class="card">
+        <h4>Smart Contract: MerkleAuditTrail.sol</h4>
+        <p>~150 LOC • Admin-only <code>anchorMerkleRoot()</code> • On-chain <code>verifyRideProof()</code> • Gas-free <code>verifyProofView()</code> • Maps each rideId to its batch</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 15: CP-ABE -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-15">
+  <div class="section-label">Cryptographic Primitive 6</div>
+  <div class="slide-title">CP-ABE — Ciphertext-Policy Attribute-Based Encryption</div>
+  <div class="two-col">
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>What is CP-ABE?</h4>
+        <p>Proposed by <strong>Bethencourt, Sahai &amp; Waters (2007)</strong>. In CP-ABE, data is encrypted under an <strong>access policy</strong> (e.g., "host OR accepted_passenger"). Only users whose attributes satisfy the policy can decrypt. Unlike traditional encryption (encrypt for ONE person), CP-ABE encrypts for a <strong>set of roles</strong>.</p>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>Application in D-CARPOOL</h4>
+        <ul>
+          <li><strong>Vehicle info</strong> (plate number, color) encrypted with policy:<br><code>"ride_456_host OR ride_456_accepted"</code></li>
+          <li>Host gets key with attribute <code>[ride_456_host]</code></li>
+          <li>Accepted rider gets <code>[ride_456_accepted]</code></li>
+          <li>Random users → <strong>cannot decrypt</strong></li>
+          <li>Leaving ride → attribute revoked → access revoked</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>Traditional vs CP-ABE</h4>
+        <table>
+          <tr><th>Aspect</th><th>Traditional</th><th>CP-ABE</th></tr>
+          <tr><td>Encrypt for</td><td>1 person</td><td>Policy/roles</td></tr>
+          <tr><td>New user access</td><td>Re-encrypt</td><td>Auto (if attributes match)</td></tr>
+          <tr><td>Access control</td><td>Key per user</td><td>Attributes per user</td></tr>
+          <tr><td>Scalability</td><td>O(n) keys</td><td>O(1) ciphertext</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h4>Implementation</h4>
+        <p><strong>cpabe_service/</strong> — Flask microservice (port 7001) providing encrypt/decrypt/keygen endpoints.<br>
+        <strong>Server-side</strong>: <code>cpabeClient.js</code>, <code>cpabeHelpers.js</code>, <code>cpabeKeyStore.js</code> — transparent integration with ride creation/viewing. Best-effort: if CP-ABE service is down, falls back gracefully.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 16: SHAMIR SSS -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-16">
+  <div class="section-label">Cryptographic Primitive 7</div>
+  <div class="slide-title">Shamir's Secret Sharing — SOS Emergency Data</div>
+  <div class="two-col">
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>Shamir's Secret Sharing (1979)</h4>
+        <p>By <strong>Adi Shamir</strong>. Splits a secret $S$ into $n$ shares using a random polynomial of degree $k{-}1$ over a finite field. Any $k$ shares can reconstruct $S$ via <strong>Lagrange interpolation</strong>. With $k{-}1$ or fewer shares, <strong>zero information</strong> about $S$ is revealed.</p>
+        <p style="margin-top:8px;">This is <strong>information-theoretic security</strong> — unbreakable even with unlimited computing power (unlike encryption which is computationally secure).</p>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>Mathematical Foundation</h4>
+        <p style="font-size:14px;color:var(--text);">
+          Secret $S = a_0$. Choose random $a_1, ..., a_{k-1}$.<br>
+          Polynomial: $f(x) = a_0 + a_1 x + a_2 x^2 + \cdots + a_{k-1} x^{k-1} \pmod{p}$<br>
+          Shares: $(i, f(i))$ for $i = 1, ..., n$<br>
+          Recover: $S = f(0) = \sum_{j=0}^{k-1} y_j \prod_{m \neq j} \frac{x_m}{x_m - x_j}$
+        </p>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h4>SOS Emergency Data (5,3) Scheme</h4>
+        <div class="flow-box" style="margin-bottom:6px;">Emergency Data: {contact, blood group, allergies}</div>
+        <div class="flow-arrow">↓ Shamir Split (n=5, k=3)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+          <div class="flow-box" style="font-size:12px;">Share 1 → Admin</div>
+          <div class="flow-box" style="font-size:12px;">Share 2 → User Wallet</div>
+          <div class="flow-box" style="font-size:12px;">Share 3 → Trusted Contact 1</div>
+          <div class="flow-box" style="font-size:12px;">Share 4 → Trusted Contact 2</div>
+        </div>
+        <div class="flow-box" style="margin-bottom:6px;font-size:12px;">Share 5 → Blockchain Backup</div>
+        <div class="flow-arrow">↓ SOS Triggered — collect 3 shares</div>
+        <div class="flow-box" style="border-color:var(--green);">✓ Reconstruct → Emergency services notified</div>
+      </div>
+      <div class="card">
+        <h4>Smart Contract: ShamirSOSVault.sol</h4>
+        <p>~355 LOC (largest contract) • <code>configureSOS()</code> — set threshold scheme • <code>commitShare()</code> — on-chain hash commitment • <code>triggerSOS()</code> — emits GPS coords • <code>verifyShare()</code> — keccak256 comparison • Threshold tracking per event</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 17: SMART CONTRACT SUMMARY -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-17">
+  <div class="section-label">Implementation</div>
+  <div class="slide-title">Smart Contract Inventory — 8 Deployed Contracts</div>
+  <div class="content-area">
+    <table>
+      <thead>
+        <tr>
+          <th>Contract</th>
+          <th>LOC</th>
+          <th>Purpose</th>
+          <th>Key Function</th>
+          <th>Security Model</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>UserIdentity</strong></td>
+          <td>~120</td>
+          <td>SBT Identity Registry</td>
+          <td><code>mintStudentSBT()</code></td>
+          <td>Admin-only, non-transferable</td>
+        </tr>
+        <tr>
+          <td><strong>RideContract</strong></td>
+          <td>~250</td>
+          <td>Ride Lifecycle + Boarding</td>
+          <td><code>boardRider(sig)</code></td>
+          <td>ECDSA (OpenZeppelin)</td>
+        </tr>
+        <tr>
+          <td><strong>Reputation</strong></td>
+          <td>~100</td>
+          <td>On-chain Ratings</td>
+          <td><code>submitRating()</code></td>
+          <td>Duplicate prevention (keccak256)</td>
+        </tr>
+        <tr>
+          <td><strong>DPoSGovernance</strong></td>
+          <td>~160</td>
+          <td>Delegate Election</td>
+          <td><code>getDelegates()</code></td>
+          <td>Stake-weighted, payable</td>
+        </tr>
+        <tr>
+          <td><strong>DisputeResolution</strong></td>
+          <td>~115</td>
+          <td>Delegate Voting</td>
+          <td><code>delegateVote()</code></td>
+          <td>Cross-contract onlyDelegate</td>
+        </tr>
+        <tr>
+          <td><strong>ZKPDriverVerifier</strong></td>
+          <td>~30</td>
+          <td>ZKP Verification</td>
+          <td><code>verifyDriverZKProof()</code></td>
+          <td>Proof validation (mock)</td>
+        </tr>
+        <tr>
+          <td><strong>MerkleAuditTrail</strong></td>
+          <td>~150</td>
+          <td>Batch Ride Audit</td>
+          <td><code>verifyRideProof()</code></td>
+          <td>Admin-only anchor, public verify</td>
+        </tr>
+        <tr>
+          <td><strong>ShamirSOSVault</strong></td>
+          <td>~355</td>
+          <td>SOS Emergency</td>
+          <td><code>triggerSOS()</code></td>
+          <td>Threshold, owner/admin RBAC</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:16px;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;">
+      <span class="badge badge-purple">Total: ~1,280 Lines of Solidity</span>
+      <span class="badge badge-green">Solidity 0.8.20</span>
+      <span class="badge badge-blue">OpenZeppelin ECDSA</span>
+      <span class="badge badge-orange">Sepolia Testnet</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 18: TECH STACK -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-18">
+  <div class="section-label">Implementation</div>
+  <div class="slide-title">Technology Stack</div>
+  <div class="three-col">
+    <div class="card">
+      <div class="card-icon" style="background:rgba(116,185,255,0.15);">🖥️</div>
+      <h3>Frontend</h3>
+      <ul>
+        <li><strong>React 18.2</strong> — UI framework</li>
+        <li><strong>TailwindCSS</strong> — Utility-first styling</li>
+        <li><strong>Ethers.js v6</strong> — Web3 integration</li>
+        <li><strong>React Router v6</strong> — SPA navigation</li>
+        <li><strong>Leaflet + OpenStreetMap</strong> — Map previews</li>
+        <li><strong>Lucide React</strong> — Icon library</li>
+        <li><strong>React Hot Toast</strong> — Notifications</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:rgba(0,206,201,0.15);">⚙️</div>
+      <h3>Backend</h3>
+      <ul>
+        <li><strong>Node.js + Express</strong> — REST API server</li>
+        <li><strong>MySQL 8</strong> — Relational database</li>
+        <li><strong>Sequelize ORM</strong> — Database abstraction</li>
+        <li><strong>Resend API</strong> — Email delivery (OTP)</li>
+        <li><strong>Multer</strong> — File upload handling</li>
+        <li><strong>merkletreejs</strong> — Merkle tree construction</li>
+        <li><strong>secrets.js-grempe</strong> — Shamir SSS</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-icon" style="background:rgba(108,92,231,0.15);">⛓️</div>
+      <h3>Blockchain &amp; Crypto</h3>
+      <ul>
+        <li><strong>Solidity 0.8.20</strong> — Smart contracts</li>
+        <li><strong>Hardhat</strong> — Dev framework</li>
+        <li><strong>Sepolia Testnet</strong> — Deployment</li>
+        <li><strong>MetaMask</strong> — Wallet provider</li>
+        <li><strong>OpenZeppelin</strong> — ECDSA, MessageHashUtils</li>
+        <li><strong>Flask (Python)</strong> — CP-ABE microservice</li>
+        <li><strong>Pinata</strong> — IPFS gateway</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 19: EXPERIMENTAL SETUP -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-19">
+  <div class="section-label">Experimental Results</div>
+  <div class="slide-title">Experimental Setup</div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Development Environment</h3>
+      <table>
+        <tr><td>OS</td><td>macOS</td></tr>
+        <tr><td>Node.js</td><td>v16+</td></tr>
+        <tr><td>MySQL</td><td>v8.x</td></tr>
+        <tr><td>Python</td><td>3.x (CP-ABE service)</td></tr>
+        <tr><td>Browser</td><td>Chrome + MetaMask Extension</td></tr>
+        <tr><td>Blockchain</td><td>Ethereum Sepolia Testnet</td></tr>
+        <tr><td>Solidity Compiler</td><td>0.8.20 (Optimizer: 200 runs)</td></tr>
+        <tr><td>Ethers.js</td><td>v6</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Configuration Parameters</h3>
+      <table>
+        <tr><td>DPoS Delegate Count</td><td>5</td></tr>
+        <tr><td>Min Candidate Stake</td><td>0.01 ETH</td></tr>
+        <tr><td>Dispute Quorum</td><td>3 / 5 delegates</td></tr>
+        <tr><td>Voting Period</td><td>24 hours</td></tr>
+        <tr><td>Shamir Scheme</td><td>(5, 3) threshold</td></tr>
+        <tr><td>Rating Scale</td><td>0 — 5 stars (×100 precision)</td></tr>
+        <tr><td>Ride Time Slot</td><td>60 minutes</td></tr>
+        <tr><td>Email Domain Restriction</td><td>@iiitkottayam.ac.in</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 20: RESULTS — ON-CHAIN GAS ANALYSIS -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-20">
+  <div class="section-label">Experimental Results</div>
+  <div class="slide-title">On-Chain Gas Cost Analysis</div>
+  <div class="content-area">
+    <table>
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>Contract</th>
+          <th>Gas Estimated</th>
+          <th>Category</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Register User</td><td>UserIdentity</td><td>~80,000</td><td>Identity</td></tr>
+        <tr><td>Mint SBT</td><td>UserIdentity</td><td>~45,000</td><td>Identity</td></tr>
+        <tr><td>Create Ride</td><td>RideContract</td><td>~150,000</td><td>Ride Lifecycle</td></tr>
+        <tr><td>Board Rider (ECDSA)</td><td>RideContract</td><td>~65,000</td><td>Verification</td></tr>
+        <tr><td>Anchor Agreement Hash</td><td>RideContract</td><td>~50,000</td><td>Integrity</td></tr>
+        <tr><td>Submit Rating</td><td>Reputation</td><td>~70,000</td><td>Reputation</td></tr>
+        <tr><td>Register Candidate</td><td>DPoSGovernance</td><td>~90,000</td><td>Governance</td></tr>
+        <tr><td>Cast Delegate Vote</td><td>DisputeResolution</td><td>~55,000</td><td>Governance</td></tr>
+        <tr><td>Anchor Merkle Root</td><td>MerkleAuditTrail</td><td>~60,000 + N×22k</td><td>Audit</td></tr>
+        <tr><td>Trigger SOS</td><td>ShamirSOSVault</td><td>~70,000</td><td>Safety</td></tr>
+      </tbody>
+    </table>
+    <div class="card" style="margin-top:20px;">
+      <h4>Observations</h4>
+      <p>Merkle root anchoring is the most gas-efficient bulk operation — stores unlimited rides with a single 32-byte root. ECDSA boarding verification (~65k gas) is cheaper than a typical ERC-721 transfer (~100k gas), making it practical for per-ride use on testnet.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 21: RESULTS — SECURITY ANALYSIS -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-21">
+  <div class="section-label">Experimental Results</div>
+  <div class="slide-title">Security Analysis — Threat Coverage</div>
+  <div class="content-area">
+    <table>
+      <thead>
+        <tr><th>Threat</th><th>Mitigation</th><th>Mechanism</th><th>Security Level</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Fake Identity / Sybil Attack</td><td>Soulbound Token (non-transferable)</td><td>SBT</td><td><span class="badge badge-green">Strong</span></td></tr>
+        <tr><td>Credential Exposure</td><td>Prove validity without revealing data</td><td>ZKP</td><td><span class="badge badge-green">Strong</span></td></tr>
+        <tr><td>Boarding Impersonation</td><td>ECDSA signature verification on-chain</td><td>ECDSA</td><td><span class="badge badge-green">Strong</span></td></tr>
+        <tr><td>Central Admin Abuse</td><td>Community-elected delegates vote on disputes</td><td>DPoS</td><td><span class="badge badge-green">Strong</span></td></tr>
+        <tr><td>Ride History Tampering</td><td>Merkle root anchored on-chain</td><td>Merkle Tree</td><td><span class="badge badge-green">Strong</span></td></tr>
+        <tr><td>Unauthorized Data Access</td><td>Policy-based encryption per ride</td><td>CP-ABE</td><td><span class="badge badge-green">Strong</span></td></tr>
+        <tr><td>Emergency Data Leakage</td><td>Threshold secret sharing (information-theoretic)</td><td>Shamir SSS</td><td><span class="badge badge-green">Strong</span></td></tr>
+        <tr><td>Ride Agreement Dispute</td><td>keccak256 hash immutably stored on-chain</td><td>Hash Anchoring</td><td><span class="badge badge-green">Strong</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 22: ON-CHAIN vs OFF-CHAIN -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-22">
+  <div class="section-label">Experimental Results</div>
+  <div class="slide-title">On-Chain vs Off-Chain Data Strategy</div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Stored Off-Chain (MySQL)</h3>
+      <ul>
+        <li>Full user profiles (name, email, phone)</li>
+        <li>Ride details (locations, times, seats, vehicle)</li>
+        <li>Participant status and join history</li>
+        <li>Complaint descriptions and evidence</li>
+        <li>SOS alert details and contacts</li>
+        <li>Rating comments</li>
+      </ul>
+      <div style="margin-top:12px;">
+        <h4>Why?</h4>
+        <p>Performance (indexed queries), privacy (no PII on public ledger), storage cost (0-cost vs. gas per byte)</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Stored On-Chain (Blockchain)</h3>
+      <ul>
+        <li>SBT verification status (bool per address)</li>
+        <li>Ride lifecycle events (Created, Started, Completed)</li>
+        <li>Agreement hash (32 bytes per ride)</li>
+        <li>Rating scores (running average)</li>
+        <li>Dispute records + delegate votes</li>
+        <li>Merkle root per audit batch (32 bytes)</li>
+        <li>SSS share commitments (hashes only)</li>
+        <li>ZKP verification flags</li>
+      </ul>
+      <div style="margin-top:12px;">
+        <h4>Why?</h4>
+        <p>Immutability, tamper-evidence, public verifiability, non-repudiation, trustless governance</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 23: DEMO - REGISTRATION -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-23">
+  <div class="section-label">Demonstration</div>
+  <div class="slide-title">User Registration &amp; SBT Minting</div>
+  <div class="two-col">
+    <div class="img-placeholder">
+      <div class="icon">📸</div>
+      <div class="label">Screenshot: Registration page with MetaMask wallet connection and @iiitkottayam.ac.in email input</div>
+    </div>
+    <div class="img-placeholder">
+      <div class="icon">📸</div>
+      <div class="label">Screenshot: Email OTP verification + SBT minted confirmation on profile page</div>
+    </div>
+  </div>
+  <div class="card" style="max-width:1200px;margin-top:20px;">
+    <h4>Flow Demonstrated</h4>
+    <p>1. User connects MetaMask wallet → 2. Enters username + @iiitkottayam.ac.in email → 3. Receives OTP via Resend API → 4. Verifies OTP → 5. SBT minted on-chain → 6. Profile shows verified badge</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 24: DEMO - RIDE CREATION & SEARCH -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-24">
+  <div class="section-label">Demonstration</div>
+  <div class="slide-title">Ride Creation, Search &amp; Join</div>
+  <div class="two-col">
+    <div class="img-placeholder">
+      <div class="icon">📸</div>
+      <div class="label">Screenshot: Create Ride form — source/destination (autocomplete), date/time, seats, price, tags, vehicle info</div>
+    </div>
+    <div class="img-placeholder">
+      <div class="icon">📸</div>
+      <div class="label">Screenshot: Search results with filters (location, date, tags, price) + map preview + ride cards</div>
+    </div>
+  </div>
+  <div class="card" style="max-width:1200px;margin-top:20px;">
+    <h4>Features Shown</h4>
+    <p>Location autocomplete • OpenStreetMap preview • Smart filters • Ride tags (Office, Airport, College, etc.) • CP-ABE encrypted vehicle info (visible only to host + accepted riders)</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 25: DEMO - BOARDING PASS -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-25">
+  <div class="section-label">Demonstration</div>
+  <div class="slide-title">Cryptographic Boarding Pass (ECDSA)</div>
+  <div class="two-col">
+    <div class="img-placeholder">
+      <div class="icon">📸</div>
+      <div class="label">Screenshot: Rider generates ECDSA boarding signature via MetaMask signing prompt</div>
+    </div>
+    <div class="img-placeholder">
+      <div class="icon">📸</div>
+      <div class="label">Screenshot: Driver verifies signature on-chain — "Passenger cryptographically verified!" toast</div>
+    </div>
+  </div>
+  <div class="card" style="max-width:1200px;margin-top:20px;">
+    <h4>End-to-End ECDSA Flow</h4>
+    <p>1. Rider clicks "Generate Boarding Pass" → MetaMask signs <code>keccak256(rideId, driverAddr, "BOARDING_PASS")</code> → 2. Rider copies 0x signature → 3. Driver pastes signature → 4. Driver clicks "Verify" → <code>boardRider()</code> called on-chain → 5. Contract recovers signer via ECDSA → 6. Match confirmed → <code>RiderBoarded</code> event emitted</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 26: DEMO - GOVERNANCE -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-26">
+  <div class="section-label">Demonstration</div>
+  <div class="slide-title">DPoS Governance &amp; Dispute Resolution</div>
+  <div class="two-col">
+    <div class="img-placeholder">
+      <div class="icon">📸</div>
+      <div class="label">Screenshot: Governance page — candidate registration with stake, user voting, delegate list, proposal creation</div>
+    </div>
+    <div class="img-placeholder">
+      <div class="icon">📸</div>
+      <div class="label">Screenshot: Complaint filing with on-chain dispute anchor — showing blockchain tx hash and dispute ID</div>
+    </div>
+  </div>
+  <div class="card" style="max-width:1200px;margin-top:20px;">
+    <h4>Governance Demo</h4>
+    <p>Register candidate (0.01 ETH stake) → Community votes → Top 5 = delegates → File complaint → evidenceHash anchored on-chain → Delegates vote Approve/Reject → Quorum (3/5) → Dispute finalized → Outcome recorded immutably</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 27: DEMO - ADMIN / MERKLE / SSS -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-27">
+  <div class="section-label">Demonstration</div>
+  <div class="slide-title">Admin Dashboard — Merkle Audit, CP-ABE, Shamir SSS</div>
+  <div class="three-col">
+    <div class="img-placeholder">
+      <div class="icon">📸</div>
+      <div class="label">Screenshot: Admin > Merkle Audit tab — anchor ride batch, verify ride proof</div>
+    </div>
+    <div class="img-placeholder">
+      <div class="icon">📸</div>
+      <div class="label">Screenshot: Admin > CP-ABE tab — encrypt/decrypt demo with policy editor</div>
+    </div>
+    <div class="img-placeholder">
+      <div class="icon">📸</div>
+      <div class="label">Screenshot: Admin > Shamir SSS tab — configure threshold, commit shares, trigger SOS</div>
+    </div>
+  </div>
+  <div class="card" style="max-width:1200px;margin-top:16px;">
+    <h4>Admin Features</h4>
+    <p>User management (ban/unban) • Complaint management • Merkle batch anchoring with on-chain root verification • CP-ABE encrypt/decrypt with attribute policies • Shamir SSS configuration and share management • Dashboard statistics</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 28: DEMO - SOS -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-28">
+  <div class="section-label">Demonstration</div>
+  <div class="slide-title">SOS Emergency System</div>
+  <div class="two-col">
+    <div class="img-placeholder">
+      <div class="icon">📸</div>
+      <div class="label">Screenshot: SOS button in ride view — one-tap emergency alert with GPS location sharing</div>
+    </div>
+    <div class="img-placeholder">
+      <div class="icon">📸</div>
+      <div class="label">Screenshot: SOS email notification sent to emergency contacts + on-chain triggerSOS event</div>
+    </div>
+  </div>
+  <div class="card" style="max-width:1200px;margin-top:20px;">
+    <h4>SOS + Shamir Integration</h4>
+    <p>Rider presses SOS → <code>triggerSOS(rideId, lat, lng)</code> emitted on-chain → Emergency emails sent → If detailed medical/contact data is needed, shares are collected from Admin + User + Trusted Contact (3/5 threshold) → Secret reconstructed → Emergency services notified with full details</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 29: COMPARISON WITH EXISTING -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-29">
+  <div class="section-label">Analysis</div>
+  <div class="slide-title">Comparison with Existing Solutions</div>
+  <div class="content-area">
+    <table>
+      <thead>
+        <tr><th>Feature</th><th>Uber/Ola</th><th>B-Ride (2019)</th><th>D-CARPOOL (Ours)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Architecture</td><td>Centralized</td><td>Partial Blockchain</td><td><strong>Hybrid On/Off-Chain</strong></td></tr>
+        <tr><td>Identity</td><td>Phone/Email</td><td>Ethereum Address</td><td><strong>SBT + Email OTP</strong></td></tr>
+        <tr><td>Driver Verification</td><td>Manual (centralized)</td><td>———</td><td><strong>ZKP (privacy-preserving)</strong></td></tr>
+        <tr><td>Boarding Verification</td><td>OTP (server-generated)</td><td>———</td><td><strong>ECDSA (cryptographic)</strong></td></tr>
+        <tr><td>Dispute Resolution</td><td>Centralized support</td><td>———</td><td><strong>DPoS delegate voting</strong></td></tr>
+        <tr><td>Audit Trail</td><td>Internal logs</td><td>Transaction logs</td><td><strong>Merkle root anchoring</strong></td></tr>
+        <tr><td>Data Privacy</td><td>Platform controls</td><td>Blind signatures</td><td><strong>CP-ABE per-ride encryption</strong></td></tr>
+        <tr><td>Emergency Safety</td><td>In-app button</td><td>———</td><td><strong>Shamir SSS + On-chain SOS</strong></td></tr>
+        <tr><td>Smart Contracts</td><td>0</td><td>1-2</td><td><strong>8 contracts (1,280 LOC)</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 30: LIMITATIONS & FUTURE WORK -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-30">
+  <div class="section-label">Future Work</div>
+  <div class="slide-title">Limitations &amp; Future Directions</div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Current Limitations</h3>
+      <ul>
+        <li><strong>ZKP</strong>: Currently a mock verifier — production needs zk-SNARKs (Groth16) or PLONK with circuit compiler (Circom)</li>
+        <li><strong>Gas Costs</strong>: Testnet (free) — mainnet deployment requires L2 optimization (Polygon, Arbitrum)</li>
+        <li><strong>CP-ABE</strong>: Python mock service — production needs C-based library (libbswabe) for performance</li>
+        <li><strong>Scalability</strong>: Not tested with 1000+ concurrent users</li>
+        <li><strong>Mobile</strong>: Web-only — no native mobile app</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Future Directions</h3>
+      <ul>
+        <li><strong>Real ZK-SNARK Circuit</strong>: Circom + snarkjs for driver license proof (age ≥ 18, license validity)</li>
+        <li><strong>Layer 2 Deployment</strong>: Polygon zkEVM or Arbitrum for sub-cent gas costs</li>
+        <li><strong>Decentralized Identity (DID)</strong>: W3C DID standard integration</li>
+        <li><strong>Cross-Campus Federation</strong>: Multiple campuses with federated identity</li>
+        <li><strong>Formal Verification</strong>: Certora / Slither for smart contract correctness proofs</li>
+        <li><strong>Mobile App</strong>: React Native with WalletConnect</li>
+        <li><strong>Tokenomics</strong>: Ride reward tokens for sustainable incentive design</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 31: CONCLUSION -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-31">
+  <div class="section-label">Conclusion</div>
+  <div class="slide-title">Summary &amp; Contributions</div>
+  <div class="content-area" style="max-width:960px;">
+    <div class="card" style="margin-bottom:24px;">
+      <h3>Key Contributions</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+        <div class="motivation-item">
+          <div class="num" style="background:rgba(108,92,231,0.2);color:var(--accent2);">1</div>
+          <div class="text"><strong>Comprehensive Integration</strong> of 7 cryptographic primitives (SBT, ZKP, ECDSA, DPoS, Merkle Trees, CP-ABE, Shamir SSS) in a single ride-sharing platform</div>
+        </div>
+        <div class="motivation-item">
+          <div class="num" style="background:rgba(0,206,201,0.2);color:var(--green);">2</div>
+          <div class="text"><strong>Hybrid Architecture</strong> balancing blockchain's integrity guarantees with off-chain performance and privacy requirements</div>
+        </div>
+        <div class="motivation-item">
+          <div class="num" style="background:rgba(253,203,110,0.2);color:var(--orange);">3</div>
+          <div class="text"><strong>Practical Prototype</strong> — 8 deployed smart contracts (~1,280 LOC Solidity), full-stack web app with end-to-end ride lifecycle</div>
+        </div>
+        <div class="motivation-item">
+          <div class="num" style="background:rgba(253,121,168,0.2);color:var(--pink);">4</div>
+          <div class="text"><strong>Campus-First Design</strong> — SBT identity tied to institutional email, built-in SOS with information-theoretic emergency data protection</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="text-align:center;">Project Statistics</h3>
+      <div style="display:flex;justify-content:space-around;margin-top:20px;flex-wrap:wrap;gap:24px;">
+        <div style="text-align:center;">
+          <div class="stat-number">8</div>
+          <div class="stat-label">Smart Contracts</div>
+        </div>
+        <div style="text-align:center;">
+          <div class="stat-number">7</div>
+          <div class="stat-label">Crypto Primitives</div>
+        </div>
+        <div style="text-align:center;">
+          <div class="stat-number">~1,280</div>
+          <div class="stat-label">Lines of Solidity</div>
+        </div>
+        <div style="text-align:center;">
+          <div class="stat-number">5</div>
+          <div class="stat-label">Architecture Layers</div>
+        </div>
+        <div style="text-align:center;">
+          <div class="stat-number">3</div>
+          <div class="stat-label">Services (Node, Flask, Chain)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 32: REFERENCES -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-32">
+  <div class="section-label">References</div>
+  <div class="slide-title">Key References</div>
+  <div class="content-area" style="max-width:960px;">
+    <ul class="ref-list">
+      <li><span class="ref-num">[1]</span> Shamir, A. (1979). "How to Share a Secret." <em>Communications of the ACM</em>, 22(11), 612–613. doi:10.1145/359168.359176</li>
+      <li><span class="ref-num">[2]</span> Bethencourt, J., Sahai, A., &amp; Waters, B. (2007). "Ciphertext-Policy Attribute-Based Encryption." <em>IEEE Symp. on Security and Privacy</em>. doi:10.1109/SP.2007.11</li>
+      <li><span class="ref-num">[3]</span> Merkle, R. C. (1988). "A Digital Signature Based on a Conventional Encryption Function." <em>Advances in Cryptology — CRYPTO '87</em>, LNCS 293, 369–378.</li>
+      <li><span class="ref-num">[4]</span> Goldwasser, S., Micali, S., &amp; Rackoff, C. (1985). "The Knowledge Complexity of Interactive Proof Systems." <em>STOC '85</em>, 291–304.</li>
+      <li><span class="ref-num">[5]</span> Larimer, D. (2014). "Delegated Proof-of-Stake (DPoS)." <em>BitShares Whitepaper</em>.</li>
+      <li><span class="ref-num">[6]</span> Buterin, V. (2022). "Soulbound." <em>Ethereum Research</em>.</li>
+      <li><span class="ref-num">[7]</span> Johnson, D., Menezes, A., &amp; Vanstone, S. (2001). "The Elliptic Curve Digital Signature Algorithm (ECDSA)." <em>Int. J. Information Security</em>, 1(1), 36–63.</li>
+      <li><span class="ref-num">[8]</span> Baza, M. et al. (2019). "B-Ride: Ride Sharing with Privacy-preservation, Trust and Fair Payment atop Public Blockchain." <em>IEEE Trans. Network Science and Engineering</em>.</li>
+      <li><span class="ref-num">[9]</span> Li, M. et al. (2018). "CRide: A Lightweight Blockchain-Based Ride-Hailing System." <em>IEEE IoT Journal</em>.</li>
+      <li><span class="ref-num">[10]</span> Nakamoto, S. (2008). "Bitcoin: A Peer-to-Peer Electronic Cash System." <em>bitcoin.org</em>.</li>
+      <li><span class="ref-num">[11]</span> Xiao, Y., Zhang, N., Lou, W., &amp; Hou, Y. T. (2020). "A Survey of Distributed Consensus Protocols for Blockchain Networks." <em>IEEE COMST</em>, 22(2), 1432–1465.</li>
+      <li><span class="ref-num">[12]</span> OpenZeppelin Contracts Library — ECDSA.sol, MessageHashUtils.sol. <em>github.com/OpenZeppelin/openzeppelin-contracts</em>.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 33: THANK YOU -->
+<!-- ============================================================ -->
+<div class="slide" id="slide-33">
+  <div class="section-label">Final Review — April 2026</div>
+  <div class="title-main" style="font-size:56px;">Thank You</div>
+  <div class="title-tagline">
+    Decentralized Cab-Sharing System Using Blockchain Technology
+  </div>
+  <div style="display:flex;gap:32px;flex-wrap:wrap;justify-content:center;margin-bottom:32px;">
+    <div class="card" style="text-align:center;min-width:200px;">
+      <h4>Sarthak Gupta</h4>
+      <p>2022BCY0054</p>
+    </div>
+    <div class="card" style="text-align:center;min-width:200px;">
+      <h4>G. Sai Vivek Reddy</h4>
+      <p>2022BCY0028</p>
+    </div>
+    <div class="card" style="text-align:center;min-width:200px;">
+      <h4>Hisham Abdul Asis</h4>
+      <p>2022BCY0001</p>
+    </div>
+  </div>
+  <div style="text-align:center;color:var(--muted);font-size:15px;">
+    Guide: <strong style="color:var(--text);">Sreelakshmy I J</strong><br>
+    Department of CSE (Cyber Security) • IIIT Kottayam
+  </div>
+  <div style="margin-top:32px;text-align:center;">
+    <span class="badge badge-purple" style="font-size:13px;padding:6px 16px;">Questions &amp; Discussion</span>
+  </div>
+</div>
+
+</div><!-- end slides-wrapper -->
+
+<!-- ── Navigation Bar ── -->
+<div class="nav-bar">
+  <button onclick="prevSlide()" id="prevBtn">← Previous</button>
+  <span class="slide-counter" id="slideCounter">1 / 33</span>
+  <button onclick="nextSlide()" id="nextBtn">Next →</button>
+</div>
+
+<!-- ── KaTeX for math ── -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+<script>
+  let currentSlide = 1;
+  const totalSlides = 33;
+
+  function showSlide(n) {
+    if (n < 1 || n > totalSlides) return;
+    document.querySelector('.slide.active')?.classList.remove('active');
+    document.getElementById(`slide-${n}`).classList.add('active');
+    currentSlide = n;
+    document.getElementById('slideCounter').textContent = `${n} / ${totalSlides}`;
+    document.getElementById('progressBar').style.width = `${(n / totalSlides) * 100}%`;
+    document.getElementById('prevBtn').style.opacity = n === 1 ? '0.4' : '1';
+    document.getElementById('nextBtn').style.opacity = n === totalSlides ? '0.4' : '1';
+  }
+
+  function nextSlide() { showSlide(currentSlide + 1); }
+  function prevSlide() { showSlide(currentSlide - 1); }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); nextSlide(); }
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prevSlide(); }
+    if (e.key === 'Home') { e.preventDefault(); showSlide(1); }
+    if (e.key === 'End') { e.preventDefault(); showSlide(totalSlides); }
+    // Number keys for quick jump: press 'g' then type slide number
+  });
+
+  // Touch/swipe support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].screenX;
+    if (Math.abs(diff) > 50) { diff > 0 ? nextSlide() : prevSlide(); }
+  });
+
+  // Render KaTeX math
+  window.addEventListener('load', () => {
+    if (typeof renderMathInElement !== 'undefined') {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false }
+        ]
+      });
+    }
+  });
+
+  // Initial state
+  showSlide(1);
+</script>
+
+</body>
+</html>
