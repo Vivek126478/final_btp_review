@@ -8,7 +8,7 @@ const envPath = fs.existsSync(rootEnvPath) ? rootEnvPath : rootEnvExamplePath;
 require('dotenv').config({ path: envPath });
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME || 'campus_wheels',
+  process.env.DB_NAME || 'd_carpool',
   process.env.DB_USER || 'root',
   process.env.DB_PASSWORD || 'Vivek@1264',
   {
